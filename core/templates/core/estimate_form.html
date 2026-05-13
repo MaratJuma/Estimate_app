@@ -1,0 +1,33 @@
+{% extends 'core/base.html' %}
+
+{% block title %}
+    {% if is_edit %}Редактирование сметы{% else %}Создание сметы{% endif %}
+{% endblock %}
+
+{% block content %}
+    <h2>
+        {% if is_edit %}
+            Редактирование сметы #{{ estimate.id }}
+        {% else %}
+            Создание сметы
+        {% endif %}
+    </h2>
+
+    <p>
+        {% if is_edit %}
+            <a class="button-link" href="{% url 'estimate_detail' estimate.id %}">Назад к смете</a>
+        {% else %}
+            <a class="button-link" href="{% url 'estimate_list' %}">Назад к списку смет</a>
+        {% endif %}
+    </p>
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">
+                {% if is_edit %}Сохранить изменения{% else %}Сохранить смету{% endif %}
+            </button>
+        </form>
+    </div>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends 'core/base.html' %}
+
+{% block title %}
+    {% if is_edit %}Редактировать позицию{% else %}Добавить позицию{% endif %}
+{% endblock %}
+
+{% block content %}
+    <h2>
+        {% if is_edit %}
+            Редактировать позицию в смете #{{ estimate.id }}
+        {% else %}
+            Добавить позицию в смету #{{ estimate.id }}
+        {% endif %}
+    </h2>
+
+    {% if day %}
+        <p><strong>День:</strong> {{ day.day_number }}</p>
+    {% endif %}
+
+    <p><strong>Клиент:</strong> {{ estimate.client_name }}</p>
+
+    {% if not is_edit %}
+        <div class="card">
+            <h3>Поиск и фильтр услуг</h3>
+
+            <form method="get">
+                <p>
+                    <label for="id_q"><strong>Поиск по названию:</strong></label>
+                    <input
+                        id="id_q"
+                        type="text"
+                        name="q"
+                        value="{{ query }}"
+                        placeholder="Введите название услуги"
+                    >
+                </p>
+
+                <p>
+                    <label for="id_category"><strong>Категория:</strong></label>
+                    <select id="id_category" name="category">
+                        <option value="">Все категории</option>
+                        {% for category in categories %}
+                            <option value="{{ category }}" {% if category == selected_category %}selected{% endif %}>
+                                {{ category }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </p>
+
+                <p class="top-space">
+                    <button type="submit">Найти</button>
+                    <a class="button-link" href="{% url 'estimate_item_create' day.id %}">Сбросить</a>
+                </p>
+            </form>
+
+            {% if query or selected_category %}
+                <p class="muted">
+                    Применён фильтр:
+                    {% if query %} запрос "{{ query }}" {% endif %}
+                    {% if selected_category %} категория "{{ selected_category }}" {% endif %}
+                </p>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+
+            {% if query %}
+                <input type="hidden" name="q" value="{{ query }}">
+            {% endif %}
+
+            {% if selected_category %}
+                <input type="hidden" name="category" value="{{ selected_category }}">
+            {% endif %}
+
+            {% if is_edit %}
+                <p>
+                    <strong>Услуга:</strong> {{ item.service.name }}
+                </p>
+                <p>
+                    <strong>Себестоимость за единицу:</strong> {{ display_cost_price|floatformat:2 }}
+                </p>
+            {% endif %}
+
+            {{ form.as_p }}
+
+            <button type="submit">
+                {% if is_edit %}Сохранить изменения{% else %}Добавить позицию{% endif %}
+            </button>
+        </form>
+    </div>
+
+    <p>
+        <a class="button-link" href="{% url 'estimate_detail' estimate.id %}">Назад к смете</a>
+    </p>
+{% endblock %}

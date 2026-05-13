@@ -1,0 +1,386 @@
+{% load money_filters %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Смета #{{ estimate.id }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 18mm 14mm 18mm 14mm;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            color: #222;
+            margin: 0;
+            background: #fff;
+            line-height: 1.35;
+            font-size: 14px;
+        }
+
+        .print-actions {
+            margin: 0 0 20px 0;
+        }
+
+        .print-actions button,
+        .print-actions a {
+            display: inline-block;
+            padding: 10px 14px;
+            border: 1px solid #bbb;
+            background: #f5f5f5;
+            color: #222;
+            text-decoration: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 8px;
+        }
+
+        .document {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .top-header {
+            display: table;
+            width: 100%;
+            border-bottom: 2px solid #222;
+            padding-bottom: 16px;
+            margin-bottom: 22px;
+        }
+
+        .top-header-left,
+        .top-header-right {
+            display: table-cell;
+            vertical-align: top;
+        }
+
+        .top-header-left {
+            width: 58%;
+            padding-right: 20px;
+        }
+
+        .top-header-right {
+            width: 42%;
+            text-align: right;
+        }
+
+        .logo-box {
+            width: 180px;
+            height: 60px;
+            border: 1px solid #bbb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: #777;
+            margin-bottom: 12px;
+        }
+
+        .company-name {
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .company-tagline {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .company-meta {
+            color: #444;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .doc-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .doc-number,
+        .doc-date {
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .client-card {
+            border: 1px solid #d8d8d8;
+            padding: 16px 18px;
+            margin-bottom: 22px;
+            background: #fafafa;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .meta-row {
+            margin-bottom: 8px;
+        }
+
+        .meta-label {
+            font-weight: bold;
+        }
+
+        .day-block {
+            margin-bottom: 28px;
+            page-break-inside: avoid;
+        }
+
+        .day-header {
+            border-bottom: 1px solid #bbb;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+
+        .day-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0 0 6px 0;
+        }
+
+        .day-description {
+            color: #555;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin-top: 10px;
+        }
+
+        colgroup col.col-service { width: 52%; }
+        colgroup col.col-qty { width: 12%; }
+        colgroup col.col-price { width: 18%; }
+        colgroup col.col-total { width: 18%; }
+
+        th,
+        td {
+            border: 1px solid #cfcfcf;
+            padding: 10px 12px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f0f2f5;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+        }
+
+        td {
+            background: #fff;
+        }
+
+        .text-right {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .service-name {
+            font-weight: 500;
+        }
+
+        .day-total {
+            margin-top: 10px;
+            text-align: right;
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .grand-total-box {
+            margin-top: 34px;
+            border-top: 2px solid #222;
+            padding-top: 18px;
+            page-break-inside: avoid;
+        }
+
+        .grand-total-line {
+            display: table;
+            width: 100%;
+        }
+
+        .grand-total-label,
+        .grand-total-value {
+            display: table-cell;
+            vertical-align: middle;
+        }
+
+        .grand-total-label {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .grand-total-value {
+            text-align: right;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .footer-note {
+            margin-top: 28px;
+            color: #555;
+            font-size: 13px;
+        }
+
+        .signature-block {
+            margin-top: 42px;
+            page-break-inside: avoid;
+        }
+
+        .signature-line {
+            margin-top: 28px;
+            border-top: 1px solid #555;
+            width: 320px;
+            padding-top: 6px;
+            font-size: 13px;
+        }
+
+        @media print {
+            .print-actions {
+                display: none;
+            }
+
+            .document {
+                max-width: none;
+            }
+
+            a {
+                color: inherit;
+                text-decoration: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="document">
+        <div class="print-actions">
+            <button onclick="window.print()">Печать / Сохранить в PDF</button>
+            <a href="{% url 'estimate_detail' estimate.id %}">Назад к смете</a>
+        </div>
+
+        <div class="top-header">
+            <div class="top-header-left">
+                <div class="logo-box"></div>
+                <div class="company-name">{{ company.name }}</div>
+                <div class="company-tagline">{{ company.tagline }}</div>
+                <div class="company-meta">
+                    <div>{{ company.address }}</div>
+                    <div>Тел.: {{ company.phone }}</div>
+                    <div>E-mail: {{ company.email }}</div>
+                    <div>Сайт: {{ company.site }}</div>
+                </div>
+            </div>
+
+            <div class="top-header-right">
+                <div class="doc-title">СМЕТА</div>
+                <div class="doc-number"><strong>№:</strong> {{ estimate.id }}</div>
+                <div class="doc-date"><strong>Дата:</strong> {{ document_date|date:"d.m.Y" }}</div>
+            </div>
+        </div>
+
+        <div class="client-card">
+            <div class="section-title">Информация по проекту</div>
+
+            <div class="meta-row">
+                <span class="meta-label">Клиент:</span>
+                {{ estimate.client_name }}
+            </div>
+
+            <div class="meta-row">
+                <span class="meta-label">Менеджер проекта:</span>
+                {{ estimate.manager_name }}
+            </div>
+
+            {% if estimate.comment %}
+                <div class="meta-row">
+                    <span class="meta-label">Комментарий:</span>
+                    {{ estimate.comment }}
+                </div>
+            {% endif %}
+        </div>
+
+        {% for day in days %}
+            <div class="day-block">
+                <div class="day-header">
+                    <div class="day-title">
+                        День {{ day.day_number }}
+                        {% if day.title %}— {{ day.title }}{% endif %}
+                    </div>
+
+                    {% if day.description %}
+                        <p class="day-description">{{ day.description|linebreaksbr }}</p>
+                    {% endif %}
+                </div>
+
+                {% if day.items_list %}
+                    <table>
+                        <colgroup>
+                            <col class="col-service">
+                            <col class="col-qty">
+                            <col class="col-price">
+                            <col class="col-total">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>Наименование услуги</th>
+                                <th class="text-center">Кол-во</th>
+                                <th class="text-right">Цена</th>
+                                <th class="text-right">Сумма</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in day.items_list %}
+                                <tr>
+                                    <td class="service-name">{{ item.service.name }}</td>
+                                    <td class="text-center">{{ item.qty }}</td>
+                                    <td class="text-right">{{ item.client_price|money }} </td>
+                                    <td class="text-right">{{ item.total_client|money }} </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="day-total">
+                        Итого за день: {{ day.total_client_sum|money }} ₽
+                    </div>
+                {% else %}
+                    <p>Нет позиций.</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <div class="grand-total-box">
+            <div class="grand-total-line">
+                <div class="grand-total-label">Общая стоимость проекта:</div>
+                <div class="grand-total-value">{{ total_client|money }} ₽</div>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            Предложение действительно на дату формирования документа. Финальная стоимость может
+            уточняться при изменении состава услуг, объёмов работ, сроков и условий реализации проекта.
+        </div>
+
+        <div class="signature-block">
+            <div><strong>{{ company.manager_title }}:</strong> {{ company.manager_name }}</div>
+            <div class="signature-line">Подпись</div>
+        </div>
+    </div>
+</body>
+</html>

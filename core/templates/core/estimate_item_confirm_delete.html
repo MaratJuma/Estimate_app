@@ -1,0 +1,25 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Удаление позиции{% endblock %}
+
+{% block content %}
+    <h2>Удаление позиции сметы</h2>
+
+    <div class="card">
+        <p>Вы действительно хотите удалить эту позицию?</p>
+
+        <p><strong>Услуга:</strong> {{ item.service.name }}</p>
+        <p><strong>Количество:</strong> {{ item.qty }}</p>
+        <p><strong>Итого себестоимость:</strong> {{ item.total_cost }}</p>
+        <p><strong>Итого клиенту:</strong> {{ item.total_client }}</p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Да, удалить</button>
+    </form>
+
+    <p class="top-space">
+        <a class="button-link" href="{% url 'estimate_detail' item.estimate_day.estimate.id %}">Отмена</a>
+    </p>
+{% endblock %}

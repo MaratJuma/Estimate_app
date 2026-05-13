@@ -1,0 +1,41 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Добавить поставщика{% endblock %}
+
+{% block content %}
+        <h2>
+            {% if is_edit %}
+                Редактировать поставщика
+            {% else %}
+                Добавить поставщика
+            {% endif %}
+        </h2>
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+
+            {% if next_url %}
+                <input type="hidden" name="next" value="{{ next_url }}">
+            {% endif %}
+
+            {{ form.as_p }}
+
+            <button type="submit">  {% if is_edit %}
+                                        Внести измененти
+                                    {% else %}
+                                        Добавить поставщика
+                                    {% endif %}
+            </button>
+
+        </form>
+    </div>
+
+    <p>
+        {% if next_url %}
+            <a class="button-link" href="{{ next_url }}">Назад</a>
+        {% else %}
+            <a class="button-link" href="{% url 'service_list' %}">Назад к услугам</a>
+        {% endif %}
+    </p>
+{% endblock %}

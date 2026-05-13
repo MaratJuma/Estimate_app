@@ -1,0 +1,27 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Вход{% endblock %}
+
+{% block content %}
+    <h2>Вход в систему</h2>
+
+    <div class="card" style="max-width: 420px;">
+        {% if form.errors %}
+            <p style="color: #b00020;">Неверный логин или пароль.</p>
+        {% endif %}
+
+        {% if next %}
+            {% if user.is_authenticated %}
+                <p>У вас нет доступа к этой странице.</p>
+            {% else %}
+                <p>Пожалуйста, войдите, чтобы продолжить.</p>
+            {% endif %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Войти</button>
+        </form>
+    </div>
+{% endblock %}

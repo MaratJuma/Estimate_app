@@ -1,0 +1,28 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Утверждение сметы{% endblock %}
+
+{% block content %}
+    <h2>Утвердить смету #{{ estimate.id }}</h2>
+
+    <div class="card">
+        <p>
+            После утверждения смету нельзя будет редактировать:
+        </p>
+
+        <ul>
+            <li>изменять шапку сметы</li>
+            <li>добавлять, редактировать и удалять дни</li>
+            <li>добавлять, редактировать и удалять позиции</li>
+        </ul>
+
+        <p><strong>Клиент:</strong> {{ estimate.client_name }}</p>
+        <p><strong>Менеджер:</strong> {{ estimate.manager_name }}</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="danger-link">Да, утвердить</button>
+            <a class="button-reset" href="{% url 'estimate_detail' estimate.id %}">Отмена</a>
+        </form>
+    </div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+    <h2>Главная</h2>
+    <p>Проект запущен и работает.</p>
+
+    <div class="top-space">
+        <div class="button-container">
+            <a class="button-link" href="{% url 'contractor_list' %}">Поставщики</a>
+            <a class="button-link" href="{% url 'service_list' %}">Услуги</a>
+            <a class="button-link" href="{% url 'estimate_list' %}">Сметы</a>
+            <a class="button-link" href="{% url 'estimate_create' %}">Создать смету</a>
+        </div>
+    </div>
+{% endblock %}

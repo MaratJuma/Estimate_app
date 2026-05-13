@@ -1,0 +1,34 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Удаление услуги{% endblock %}
+
+{% block content %}
+    <h2>Удаление услуги</h2>
+
+    <div class="card">
+        <p>Вы действительно хотите удалить услугу:</p>
+
+        <p><strong>{{ service.name }}</strong></p>
+
+        <p>
+            <strong>Поставщик:</strong>
+            {{ service.contractor.name }}
+        </p>
+
+        <p>
+            <strong>Себестоимость:</strong>
+            {{ service.cost_price|floatformat:2 }}
+        </p>
+
+        <p>
+            <strong>Цена клиенту:</strong>
+            {{ service.client_price|floatformat:2 }}
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="danger-link">Да, удалить</button>
+            <a class="button-reset" href="{% url 'service_list' %}">Отмена</a>
+        </form>
+    </div>
+{% endblock %}

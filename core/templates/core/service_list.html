@@ -1,0 +1,112 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Услуги{% endblock %}
+
+{% block content %}
+    <h2>Услуги</h2>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+        {% if can_manage_services_ui %}
+            <a class="button-link" href="{% url 'service_create' %}">Добавить услугу</a>
+            <a class="button-link" href="{% url 'contractor_create' %}">Добавить поставщика</a>
+        {% endif %}
+            <a class="button-link" href="{% url 'contractor_list' %}">Список поставщиков</a>
+    </div>
+
+    <div class="card">
+        <form method="get">
+            <p>
+                <label for="id_q"><strong>Поиск по названию:</strong></label>
+                <input
+                    id="id_q"
+                    type="text"
+                    name="q"
+                    value="{{ query }}"
+                    placeholder="Введите название услуги"
+                >
+            </p>
+
+            <p>
+                <label for="id_category"><strong>Категория:</strong></label>
+                <select id="id_category" name="category">
+                    <option value="">Все категории</option>
+                    {% for category in categories %}
+                        <option value="{{ category }}" {% if category == selected_category %}selected{% endif %}>
+                            {{ category }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </p>
+
+            <p class="top-space">
+                <button type="submit">Найти</button>
+                <a class="button-reset" href="{% url 'service_list' %}">Сбросить</a>
+            </p>
+        </form>
+
+        {% if query or selected_category %}
+            <p class="muted">
+                Применён фильтр:
+                {% if query %} запрос "{{ query }}" {% endif %}
+                {% if selected_category %} категория "{{ selected_category }}" {% endif %}
+            </p>
+        {% endif %}
+    </div>
+
+    {% if services %}
+        <div class="table-wrapper">
+            <table class="estimate-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Услуга</th>
+                        <th>Поставщик</th>
+                        <th>Категория</th>
+                        <th>Себестоимость</th>
+                        <th>Цена клиенту</th>
+                        <th>Активна</th>
+                        <th>Медиа</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for service in services %}
+                        <tr>
+                            <td>{{ service.id }}</td>
+                            <td>{{ service.name }}</td>
+                            <td>{{ service.contractor.name }}</td>
+                            <td>{{ service.contractor.category|default:"—" }}</td>
+                            <td>{{ service.cost_price|floatformat:2 }}</td>
+                            <td>{{ service.client_price|floatformat:2 }}</td>
+                            <td>
+                                {% if service.is_active %}
+                                    Да
+                                {% else %}
+                                    Нет
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if service.image_url %}
+                                    <a href="{{ service.image_url }}" target="_blank" rel="noopener noreferrer">Ссылка</a>
+                                {% else %}
+                                    &mdash;
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if can_manage_services_ui %}
+                                    <a href="{% url 'service_update' service.id %}">Ред.</a>
+                                    |
+                                    <a href="{% url 'service_delete' service.id %}">Удалить</a>
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>Услуги не найдены.</p>
+    {% endif %}
+{% endblock %}

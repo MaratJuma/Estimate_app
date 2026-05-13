@@ -1,0 +1,29 @@
+{% extends 'core/base.html' %}
+
+{% block title %}
+    {% if is_edit %}Редактировать день{% else %}Добавить день{% endif %}
+{% endblock %}
+
+{% block content %}
+    <h2>
+        {% if is_edit %}
+            Редактировать день
+        {% else %}
+            Добавить день в смету #{{ estimate.id }}
+        {% endif %}
+    </h2>
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">
+                {% if is_edit %}Сохранить{% else %}Добавить день{% endif %}
+            </button>
+        </form>
+    </div>
+
+    <p>
+        <a class="button-link" href="{% url 'estimate_detail' estimate.id %}">Назад к смете</a>
+    </p>
+{% endblock %}
