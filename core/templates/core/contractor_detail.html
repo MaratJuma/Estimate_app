@@ -7,7 +7,11 @@
     <h2>Поставщик: {{ contractor.name }}</h2>
 
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
-        <a class="button-link" href="{% url 'contractor_list' %}">Назад к списку поставщиков</a>
+        {% if next_url %}
+            <a class="button-link" href="{{ next_url }}">Назад</a>
+        {% else %}
+            <a class="button-link" href="{% url 'contractor_list' %}">Назад</a>
+        {% endif %}
 
         {% if can_manage_contractors_ui %}
             <a class="button-link" href="{% url 'contractor_update' contractor.id %}">Редактировать информацию о поставщике</a>

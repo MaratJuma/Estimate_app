@@ -221,10 +221,12 @@ def contractor_detail(request, contractor_id):
 
     contractor = get_object_or_404(Contractor, id=contractor_id)
     services = contractor.services.all().order_by('name', 'id')
+    next_url = request.GET.get('next')
 
     return render(request, 'core/contractor_detail.html', {
         'contractor': contractor,
         'services': services,
+        'next_url': next_url,
     })
 
 @login_required
@@ -421,72 +423,6 @@ def estimate_item_create(request, day_id):
         'current_full_path': request.get_full_path(),
     })
 
-# def estimate_item_create(request, day_id):
-
-#     if not can_edit_estimates(request.user):
-#         return deny_access(request, 'У вас нет прав на редактирование смет.')
-    
-#     day = get_object_or_404(EstimateDay, id=day_id)
-#     estimate = day.estimate
-    
-#     if estimate.is_approved:
-#         messages.error(request, f'Смета #{estimate.id} утверждена. Добавление позиций запрещено.')
-#         return redirect('estimate_detail', estimate_id=estimate.id)
-
-#     if request.method == 'POST':
-#         query = request.POST.get('q', '').strip()
-#         selected_category = request.POST.get('category', '').strip()
-#     else:
-#         query = request.GET.get('q', '').strip()
-#         selected_category = request.GET.get('category', '').strip()
-
-#     services = Service.objects.filter(is_active=True).order_by('name')
-
-#     if query:
-#         services = services.filter(name__icontains=query)
-
-#     if selected_category:
-#         services = services.filter(contractor__category=selected_category)
-
-#     categories = (
-#         Service.objects.filter(is_active=True)
-#         .values_list('contractor__category', flat=True)
-#         .distinct()
-#         .order_by('contractor__category')
-#     )
-
-#     if request.method == 'POST':
-#         form = EstimateItemCreateForm(request.POST)
-#         form.fields['service'].queryset = services
-
-#         if form.is_valid():
-#             item = form.save(commit=False)
-
-#             service = item.service
-#             qty = item.qty
-
-#             item.estimate_day = day
-#             item.cost_price = service.cost_price
-#             item.client_price = service.client_price
-#             item.total_cost = qty * service.cost_price
-#             item.total_client = qty * service.client_price
-
-#             item.save()
-
-#             return redirect('estimate_detail', estimate_id=estimate.id)
-#     else:
-#         form = EstimateItemCreateForm()
-#         form.fields['service'].queryset = services
-
-#     return render(request, 'core/estimate_item_form.html', {
-#         'form': form,
-#         'estimate': estimate,
-#         'day': day,
-#         'is_edit': False,
-#         'query': query,
-#         'categories': categories,
-#         'selected_category': selected_category,
-#     })
 
 @login_required
 def estimate_item_create_for_service(request, day_id, service_id):

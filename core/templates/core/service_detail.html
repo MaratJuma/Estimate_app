@@ -9,7 +9,7 @@
         <p><strong>Название услуги:</strong> {{ service.name }}</p>
         <p>
             <strong>Поставщик:</strong>
-            <a href="{% url 'contractor_detail' service.contractor.id %}">
+            <a href="{% url 'contractor_detail' service.contractor.id %}?next={{ current_full_path|urlencode }}">
                 {{ service.contractor.name }}
             </a>
         </p>
