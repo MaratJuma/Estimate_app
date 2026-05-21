@@ -1,0 +1,47 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Добавление услуги в смету{% endblock %}
+
+{% block content %}
+    <h2>Добавить услугу в смету</h2>
+
+    <div class="card" style="margin-bottom: 20px;">
+        <p><strong>Смета:</strong> №{{ estimate.id }} — {{ estimate.client_name }}</p>
+        <p><strong>День:</strong> {{ day.day_number }}{% if day.title %} — {{ day.title }}{% endif %}</p>
+    </div>
+
+    <div class="card" style="margin-bottom: 20px;">
+        <p><strong>Название услуги:</strong> {{ service.name }}</p>
+        <p>
+            <strong>Поставщик:</strong>
+            <a href="{% url 'contractor_detail' service.contractor.id %}">
+                {{ service.contractor.name }}
+            </a>
+        </p>
+        <p><strong>Себестоимость:</strong> {{ service.cost_price|floatformat:2 }}</p>
+        <p><strong>Цена клиенту:</strong> {{ service.client_price|floatformat:2 }}</p>
+        <p><strong>Комментарий:</strong><br>{{ service.description|default:"—"|linebreaksbr }}</p>
+        <p>
+            <strong>Медиа:</strong>
+            {% if service.image_url %}
+                <a href="{{ service.image_url }}" target="_blank" rel="noopener noreferrer">Открыть</a>
+            {% else %}
+                —
+            {% endif %}
+        </p>
+        <p><strong>Активна:</strong> {% if service.is_active %}Да{% else %}Нет{% endif %}</p>
+    </div>
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+
+            <button type="submit">Добавить</button>
+        </form>
+    </div>
+
+    <p>
+        <a class="button-link" href="{% url 'estimate_item_create' day.id %}">Назад к выбору услуги</a>
+    </p>
+{% endblock %}

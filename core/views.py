@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.db.models import Q, F
+from django.db.models import Q, F, Count
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
@@ -19,16 +19,18 @@ from .permissions import (
         deny_access,
         is_admin,
         is_production_manager,
-        is_sales_manager
+        is_sales_manager,
 )
 from .models import Service, Estimate, EstimateDay, EstimateItem, Contractor
 from .forms import (
         EstimateForm, 
-        EstimateItemCreateForm, 
+        EstimateItemCreateForm,
+        EstimateItemQtyForm, 
         EstimateItemUpdateForm, 
         ContractorForm, 
         # ServiceForm, 
         ServiceCreateForm,
+        ServiceForContractorCreateForm,
         ServiceUpdateForm, 
         EstimateDayCreateForm, 
         EstimateDayUpdateForm
@@ -66,12 +68,27 @@ def service_list(request):
     })
 
 @login_required
+def service_detail(request, service_id):
+
+    if not can_manage_services(request.user) and not is_sales_manager(request.user):
+        return deny_access(request, 'У вас нет прав на просмотр услуги.')
+
+    service = get_object_or_404(Service.objects.select_related('contractor'), id=service_id)
+    next_url = request.GET.get('next')
+
+    return render(request, 'core/service_detail.html', {
+        'service': service,
+        'next_url': next_url,
+    })
+
+@login_required
 def service_update(request, service_id):
 
     if not can_manage_services(request.user):
         return deny_access(request, 'У вас нет прав на управление услугами.')
     
     service = get_object_or_404(Service, id=service_id)
+    next_url = request.GET.get('next') or request.POST.get('next')
 
     old_cost_price = service.cost_price
 
@@ -98,7 +115,7 @@ def service_update(request, service_id):
                     ['cost_price', 'total_cost']
                 )
             messages.success(request, 'Услуга обновлена.')
-            return redirect('service_list')
+            return redirect(next_url or 'service_list')
     else:
         form = ServiceUpdateForm(instance=service)
 
@@ -106,6 +123,7 @@ def service_update(request, service_id):
         'form': form,
         'is_edit': True,
         'service': service,
+        'next_url': next_url,
     })
 
 @login_required
@@ -115,6 +133,7 @@ def service_delete(request, service_id):
         return deny_access(request, 'У вас нет прав на управление услугами.')
     
     service = get_object_or_404(Service, id=service_id)
+    next_url = request.GET.get('next') or request.POST.get('next')
 
     is_used = EstimateItem.objects.filter(service=service).exists()
 
@@ -123,15 +142,16 @@ def service_delete(request, service_id):
             request,
             f'Услугу "{service.name}" нельзя удалить, потому что она уже используется в сметах.'
         )
-        return redirect('service_list')
+        return redirect(next_url or 'service_list')
 
     if request.method == 'POST':
         service.delete()
         messages.success(request, f'Услуга "{service.name}" удалена.')
-        return redirect('service_list')
+        return redirect(next_url or 'service_list')
 
     return render(request, 'core/service_confirm_delete.html', {
         'service': service,
+        'next_url': next_url,
     })
 
 @login_required
@@ -143,7 +163,13 @@ def contractor_list(request):
     query = request.GET.get('q', '').strip()
     selected_category = request.GET.get('category', '').strip()
 
-    contractors = Contractor.objects.all().order_by('-id')
+    # contractors = Contractor.objects.all().order_by('-id')
+
+    contractors = (
+        Contractor.objects
+        .annotate(services_count=Count('services'))
+        .order_by('-id')
+    )
 
     if query:
         contractors = contractors.filter(name__icontains=query)
@@ -177,7 +203,7 @@ def contractor_update(request, contractor_id):
         form = ContractorForm(request.POST, instance=contractor)
         if form.is_valid():
             form.save()
-            return redirect('contractor_list')
+            return redirect('contractor_detail', contractor_id=contractor.id)
     else:
         form = ContractorForm(instance=contractor)
 
@@ -185,6 +211,20 @@ def contractor_update(request, contractor_id):
         'form': form,
         'is_edit': True,
         'contractor': contractor,
+    })
+
+@login_required
+def contractor_detail(request, contractor_id):
+
+    # if not can_manage_contractors(request.user):
+    #     return deny_access(request, 'У вас нет прав на просмотр поставщиков.')
+
+    contractor = get_object_or_404(Contractor, id=contractor_id)
+    services = contractor.services.all().order_by('name', 'id')
+
+    return render(request, 'core/contractor_detail.html', {
+        'contractor': contractor,
+        'services': services,
     })
 
 @login_required
@@ -309,22 +349,21 @@ def estimate_item_create(request, day_id):
 
     if not can_edit_estimates(request.user):
         return deny_access(request, 'У вас нет прав на редактирование смет.')
-    
+
     day = get_object_or_404(EstimateDay, id=day_id)
     estimate = day.estimate
-    
+
     if estimate.is_approved:
         messages.error(request, f'Смета #{estimate.id} утверждена. Добавление позиций запрещено.')
         return redirect('estimate_detail', estimate_id=estimate.id)
 
-    if request.method == 'POST':
-        query = request.POST.get('q', '').strip()
-        selected_category = request.POST.get('category', '').strip()
-    else:
-        query = request.GET.get('q', '').strip()
-        selected_category = request.GET.get('category', '').strip()
+    query = request.GET.get('q', '').strip()
+    selected_category = request.GET.get('category', '').strip()
+    selected_contractor = request.GET.get('contractor', '').strip()
 
-    services = Service.objects.filter(is_active=True).order_by('name')
+    base_services = Service.objects.select_related('contractor').filter(is_active=True)
+
+    services = base_services
 
     if query:
         services = services.filter(name__icontains=query)
@@ -332,44 +371,161 @@ def estimate_item_create(request, day_id):
     if selected_category:
         services = services.filter(contractor__category=selected_category)
 
+    if selected_contractor:
+        services = services.filter(contractor_id=selected_contractor)
+
+    services = services.order_by('name', 'id')
+
+    categories_qs = base_services
+
+    if query:
+        categories_qs = categories_qs.filter(name__icontains=query)
+
+    if selected_contractor:
+        categories_qs = categories_qs.filter(contractor_id=selected_contractor)
+
     categories = (
-        Service.objects.filter(is_active=True)
+        categories_qs
+        .exclude(contractor__category='')
         .values_list('contractor__category', flat=True)
         .distinct()
         .order_by('contractor__category')
     )
 
-    if request.method == 'POST':
-        form = EstimateItemCreateForm(request.POST)
-        form.fields['service'].queryset = services
+    contractors_qs = base_services
 
+    if query:
+        contractors_qs = contractors_qs.filter(name__icontains=query)
+
+    if selected_category:
+        contractors_qs = contractors_qs.filter(contractor__category=selected_category)
+
+    contractor_ids = contractors_qs.values_list('contractor_id', flat=True).distinct()
+
+    contractors = Contractor.objects.filter(id__in=contractor_ids).order_by('name')
+
+    selected_contractor_obj = None
+    if selected_contractor:
+        selected_contractor_obj = Contractor.objects.filter(id=selected_contractor).first()
+
+    return render(request, 'core/estimate_item_form.html', {
+        'estimate': estimate,
+        'day': day,
+        'services': services,
+        'query': query,
+        'categories': categories,
+        'selected_category': selected_category,
+        'contractors': contractors,
+        'selected_contractor': selected_contractor,
+        'selected_contractor_obj': selected_contractor_obj,
+        'current_full_path': request.get_full_path(),
+    })
+
+# def estimate_item_create(request, day_id):
+
+#     if not can_edit_estimates(request.user):
+#         return deny_access(request, 'У вас нет прав на редактирование смет.')
+    
+#     day = get_object_or_404(EstimateDay, id=day_id)
+#     estimate = day.estimate
+    
+#     if estimate.is_approved:
+#         messages.error(request, f'Смета #{estimate.id} утверждена. Добавление позиций запрещено.')
+#         return redirect('estimate_detail', estimate_id=estimate.id)
+
+#     if request.method == 'POST':
+#         query = request.POST.get('q', '').strip()
+#         selected_category = request.POST.get('category', '').strip()
+#     else:
+#         query = request.GET.get('q', '').strip()
+#         selected_category = request.GET.get('category', '').strip()
+
+#     services = Service.objects.filter(is_active=True).order_by('name')
+
+#     if query:
+#         services = services.filter(name__icontains=query)
+
+#     if selected_category:
+#         services = services.filter(contractor__category=selected_category)
+
+#     categories = (
+#         Service.objects.filter(is_active=True)
+#         .values_list('contractor__category', flat=True)
+#         .distinct()
+#         .order_by('contractor__category')
+#     )
+
+#     if request.method == 'POST':
+#         form = EstimateItemCreateForm(request.POST)
+#         form.fields['service'].queryset = services
+
+#         if form.is_valid():
+#             item = form.save(commit=False)
+
+#             service = item.service
+#             qty = item.qty
+
+#             item.estimate_day = day
+#             item.cost_price = service.cost_price
+#             item.client_price = service.client_price
+#             item.total_cost = qty * service.cost_price
+#             item.total_client = qty * service.client_price
+
+#             item.save()
+
+#             return redirect('estimate_detail', estimate_id=estimate.id)
+#     else:
+#         form = EstimateItemCreateForm()
+#         form.fields['service'].queryset = services
+
+#     return render(request, 'core/estimate_item_form.html', {
+#         'form': form,
+#         'estimate': estimate,
+#         'day': day,
+#         'is_edit': False,
+#         'query': query,
+#         'categories': categories,
+#         'selected_category': selected_category,
+#     })
+
+@login_required
+def estimate_item_create_for_service(request, day_id, service_id):
+
+    if not can_edit_estimates(request.user):
+        return deny_access(request, 'У вас нет прав на редактирование смет.')
+
+    day = get_object_or_404(EstimateDay, id=day_id)
+    estimate = day.estimate
+    service = get_object_or_404(Service.objects.select_related('contractor'), id=service_id, is_active=True)
+
+    if estimate.is_approved:
+        messages.error(request, f'Смета #{estimate.id} утверждена. Добавление позиций запрещено.')
+        return redirect('estimate_detail', estimate_id=estimate.id)
+
+    if request.method == 'POST':
+        form = EstimateItemQtyForm(request.POST)
         if form.is_valid():
             item = form.save(commit=False)
-
-            service = item.service
             qty = item.qty
 
             item.estimate_day = day
+            item.service = service
             item.cost_price = service.cost_price
             item.client_price = service.client_price
             item.total_cost = qty * service.cost_price
             item.total_client = qty * service.client_price
-
             item.save()
 
+            messages.success(request, f'Услуга "{service.name}" добавлена в смету.')
             return redirect('estimate_detail', estimate_id=estimate.id)
     else:
-        form = EstimateItemCreateForm()
-        form.fields['service'].queryset = services
+        form = EstimateItemQtyForm()
 
-    return render(request, 'core/estimate_item_form.html', {
+    return render(request, 'core/estimate_item_add_selected_service.html', {
         'form': form,
         'estimate': estimate,
         'day': day,
-        'is_edit': False,
-        'query': query,
-        'categories': categories,
-        'selected_category': selected_category,
+        'service': service,
     })
 
 @login_required
@@ -427,7 +583,7 @@ def estimate_item_update(request, item_id):
     else:
         form = EstimateItemUpdateForm(instance=item)
 
-    return render(request, 'core/estimate_item_form.html', {
+    return render(request, 'core/estimate_item_edit_form.html', {
         'form': form,
         'estimate': estimate,
         'day': item.estimate_day,
@@ -682,6 +838,32 @@ def service_create(request):
         'query': query,
         'categories': categories,
         'selected_category': selected_category,
+    })
+
+@login_required
+def service_create_for_contractor(request, contractor_id):
+
+    if not can_manage_services(request.user):
+        return deny_access(request, 'У вас нет прав на управление услугами.')
+
+    contractor = get_object_or_404(Contractor, id=contractor_id)
+
+    if request.method == 'POST':
+        form = ServiceForContractorCreateForm(request.POST)
+        if form.is_valid():
+            service = form.save(commit=False)
+            service.contractor = contractor
+            service.save()
+            messages.success(request, 'Услуга создана.')
+            return redirect('contractor_detail', contractor_id=contractor.id)
+    else:
+        form = ServiceForContractorCreateForm()
+
+    return render(request, 'core/service_form.html', {
+        'form': form,
+        'is_edit': False,
+        'contractor': contractor,
+        'is_contractor_context': True,
     })
 
 

@@ -27,8 +27,18 @@
 
         <form method="post">
             {% csrf_token %}
+
+            {% if next_url %}
+                <input type="hidden" name="next" value="{{ next_url }}">
+            {% endif %}
+
             <button type="submit" class="danger-link">Да, удалить</button>
-            <a class="button-reset" href="{% url 'service_list' %}">Отмена</a>
+
+            {% if next_url %}
+                <a class="button-reset" href="{{ next_url }}">Отмена</a>
+            {% else %}
+                <a class="button-reset" href="{% url 'service_list' %}">Отмена</a>
+            {% endif %}
         </form>
     </div>
 {% endblock %}

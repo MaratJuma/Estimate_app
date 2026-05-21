@@ -1,96 +1,126 @@
 {% extends 'core/base.html' %}
 
-{% block title %}
-    {% if is_edit %}Редактировать позицию{% else %}Добавить позицию{% endif %}
-{% endblock %}
+{% block title %}Добавление позиции в смету{% endblock %}
 
 {% block content %}
-    <h2>
-        {% if is_edit %}
-            Редактировать позицию в смете #{{ estimate.id }}
-        {% else %}
-            Добавить позицию в смету #{{ estimate.id }}
-        {% endif %}
-    </h2>
+    <h2>Добавить позицию в смету</h2>
 
-    {% if day %}
-        <p><strong>День:</strong> {{ day.day_number }}</p>
-    {% endif %}
-
-    <p><strong>Клиент:</strong> {{ estimate.client_name }}</p>
-
-    {% if not is_edit %}
-        <div class="card">
-            <h3>Поиск и фильтр услуг</h3>
-
-            <form method="get">
-                <p>
-                    <label for="id_q"><strong>Поиск по названию:</strong></label>
-                    <input
-                        id="id_q"
-                        type="text"
-                        name="q"
-                        value="{{ query }}"
-                        placeholder="Введите название услуги"
-                    >
-                </p>
-
-                <p>
-                    <label for="id_category"><strong>Категория:</strong></label>
-                    <select id="id_category" name="category">
-                        <option value="">Все категории</option>
-                        {% for category in categories %}
-                            <option value="{{ category }}" {% if category == selected_category %}selected{% endif %}>
-                                {{ category }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </p>
-
-                <p class="top-space">
-                    <button type="submit">Найти</button>
-                    <a class="button-link" href="{% url 'estimate_item_create' day.id %}">Сбросить</a>
-                </p>
-            </form>
-
-            {% if query or selected_category %}
-                <p class="muted">
-                    Применён фильтр:
-                    {% if query %} запрос "{{ query }}" {% endif %}
-                    {% if selected_category %} категория "{{ selected_category }}" {% endif %}
-                </p>
-            {% endif %}
-        </div>
-    {% endif %}
+    <div class="card" style="margin-bottom: 20px;">
+        <p><strong>Смета:</strong> №{{ estimate.id }} — {{ estimate.client_name }}</p>
+        <p><strong>День:</strong> {{ day.day_number }}{% if day.title %} — {{ day.title }}{% endif %}</p>
+    </div>
 
     <div class="card">
-        <form method="post">
-            {% csrf_token %}
+        <h3>Поиск и фильтрация услуг</h3>
 
-            {% if query %}
-                <input type="hidden" name="q" value="{{ query }}">
-            {% endif %}
+        <form method="get">
+            <p>
+                <label for="id_q"><strong>Поиск по названию:</strong></label>
+                <input
+                    id="id_q"
+                    type="text"
+                    name="q"
+                    value="{{ query }}"
+                    placeholder="Введите название услуги"
+                >
+            </p>
 
-            {% if selected_category %}
-                <input type="hidden" name="category" value="{{ selected_category }}">
-            {% endif %}
+            <p>
+                <label for="id_category"><strong>Категория:</strong></label>
+                <select id="id_category" name="category">
+                    <option value="">Все категории</option>
+                    {% for category in categories %}
+                        <option value="{{ category }}" {% if category == selected_category %}selected{% endif %}>
+                            {{ category }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </p>
 
-            {% if is_edit %}
-                <p>
-                    <strong>Услуга:</strong> {{ item.service.name }}
-                </p>
-                <p>
-                    <strong>Себестоимость за единицу:</strong> {{ display_cost_price|floatformat:2 }}
-                </p>
-            {% endif %}
+            <p>
+                <label for="id_contractor"><strong>Поставщик:</strong></label>
+                <select id="id_contractor" name="contractor">
+                    <option value="">Все поставщики</option>
+                    {% for contractor in contractors %}
+                        <option value="{{ contractor.id }}" {% if contractor.id|stringformat:"s" == selected_contractor %}selected{% endif %}>
+                            {{ contractor.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </p>
 
-            {{ form.as_p }}
-
-            <button type="submit">
-                {% if is_edit %}Сохранить изменения{% else %}Добавить позицию{% endif %}
-            </button>
+            <p class="top-space">
+                <button type="submit">Найти</button>
+                <a class="button-reset" href="{% url 'estimate_item_create' day.id %}">Сбросить</a>
+            </p>
         </form>
+
+        {% if query or selected_category or selected_contractor %}
+            <p class="muted">
+                Применён фильтр:
+                {% if query %} запрос "{{ query }}" {% endif %}
+                {% if selected_category %} категория "{{ selected_category }}" {% endif %}
+                {% if selected_contractor %} поставщик выбран {% endif %}
+            </p>
+        {% endif %}
     </div>
+
+    {% if services %}
+        <div class="table-wrapper">
+            <table class="estimate-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Название услуги</th>
+                        <!-- <th>Поставщик</th> -->
+                        <th>Себестоимость</th>
+                        <th>Цена клиенту</th>
+                        <th>Комментарий</th>
+                        <th>Медиа</th>
+                        <th>Активна</th>
+                        <th>Добавить</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for service in services %}
+                        <tr>
+                            <td>{{ service.id }}</td>
+                            <td>
+                                <a href="{% url 'service_detail' service.id %}?next={{ current_full_path|urlencode }}">
+                                    {{ service.name }}
+                                </a>
+                            </td>
+                            <!-- <td>
+                                <a href="{% url 'contractor_detail' service.contractor.id %}">
+                                    {{ service.contractor.name }}
+                                </a>
+                            </td> -->
+                            <td>{{ service.cost_price|floatformat:2 }}</td>
+                            <td>{{ service.client_price|floatformat:2 }}</td>
+                            <td style="min-width: 280px; max-width: 420px; white-space: normal; line-height: 1.4;">
+                                {{ service.description|default:"—"|linebreaksbr }}
+                            </td>
+                            <td>
+                                {% if service.image_url %}
+                                    <a href="{{ service.image_url }}" target="_blank" rel="noopener noreferrer">Открыть</a>
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>{% if service.is_active %}Да{% else %}Нет{% endif %}</td>
+                            <td>
+                                <a class="button-link" href="{% url 'estimate_item_create_for_service' day.id service.id %}">
+                                    Добавить
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>Подходящие услуги не найдены.</p>
+    {% endif %}
 
     <p>
         <a class="button-link" href="{% url 'estimate_detail' estimate.id %}">Назад к смете</a>

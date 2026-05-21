@@ -8,9 +8,9 @@
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
         {% if can_manage_contractors_ui %}
             <a class="button-link" href="{% url 'contractor_create' %}">Добавить поставщика</a>
-            <a class="button-link" href="{% url 'service_create' %}">Добавить услугу</a>
+            <!-- <a class="button-link" href="{% url 'service_create' %}">Добавить услугу</a> -->
         {% endif %}
-        <a class="button-link" href="{% url 'service_list' %}">Список услуг</a>
+        <!-- <a class="button-link" href="{% url 'service_list' %}">Список услуг</a> -->
     </div>
 
     <div class="card">
@@ -64,26 +64,26 @@
                         <th>Контактное лицо</th>
                         <th>Телефон</th>
                         <th>E-mail</th>
+                        <th>Кол-во услуг</th>
                         <th>Комментарий</th>
-                        <th>Действия</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for contractor in contractors %}
                         <tr>
                             <td>{{ contractor.id }}</td>
-                            <td>{{ contractor.name }}</td>
+                            <td>
+                                <a href="{% url 'contractor_detail' contractor.id %}">
+                                    {{ contractor.name }}
+                                </a>
+                            </td>
                             <td>{{ contractor.category|default:"—" }}</td>
                             <td>{{ contractor.contact_name|default:"—" }}</td>
                             <td>{{ contractor.phone|default:"—" }}</td>
                             <td>{{ contractor.email|default:"—" }}</td>
-                            <td>{{ contractor.notes|default:"—"|truncatechars:50 }}</td>
-                            <td>
-                                {% if can_manage_contractors_ui %}
-                                    <a href="{% url 'contractor_update' contractor.id %}">Редактировать</a>
-                                {% else %}
-                                    —
-                                {% endif %}
+                            <td>{{ contractor.services_count }}</td>
+                            <td style="max-width: 320px; white-space: normal; line-height: 1.4;">
+                                {{ contractor.notes|default:"—"|linebreaksbr }}
                             </td>
                         </tr>
                     {% endfor %}

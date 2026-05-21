@@ -111,3 +111,32 @@ class ServiceUpdateForm(forms.ModelForm):
             'image_url': 'Медиа',
             'is_active': 'Активна',
         }
+
+
+class ServiceForContractorCreateForm(forms.ModelForm):
+    class Meta:
+        model = Service
+        fields = ['name', 'cost_price', 'client_price', 'description', 'is_active', 'image_url']
+        widgets = {
+            'image_url': forms.URLInput(attrs={
+                'placeholder': 'https://...',
+            }),
+            
+        }
+        labels = {
+            'name': 'Название услуги',
+            'cost_price': 'Себестоимость',
+            'client_price': 'Цена для клиента',
+            'description': 'Комментарий',
+            'image_url': 'Медиа',
+            'is_active': 'Активна',
+        }
+
+
+class EstimateItemQtyForm(forms.ModelForm):
+    class Meta:
+        model = EstimateItem
+        fields = ['qty']
+        labels = {
+            'qty': 'Количество',
+        }

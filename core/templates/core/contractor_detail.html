@@ -1,0 +1,82 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Поставщик: {{ contractor.name }}{% endblock %}
+
+{% block content %}
+
+    <h2>Поставщик: {{ contractor.name }}</h2>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+        <a class="button-link" href="{% url 'contractor_list' %}">Назад к списку поставщиков</a>
+
+        {% if can_manage_contractors_ui %}
+            <a class="button-link" href="{% url 'contractor_update' contractor.id %}">Редактировать информацию о поставщике</a>
+        {% endif %}
+
+        {% if can_manage_services_ui %}
+            <a class="button-link" href="{% url 'service_create_for_contractor' contractor.id %}">Добавить услугу</a>
+        {% endif %}
+    </div>
+
+    <div class="card" style="margin-bottom: 20px;">
+        <p><strong>Название:</strong> {{ contractor.name }}</p>
+        <p><strong>Категория:</strong> {{ contractor.category|default:"—" }}</p>
+        <p><strong>Контактное лицо:</strong> {{ contractor.contact_name|default:"—" }}</p>
+        <p><strong>Телефон:</strong> {{ contractor.phone|default:"—" }}</p>
+        <p><strong>E-mail:</strong> {{ contractor.email|default:"—" }}</p>
+        <p><strong>Комментарий:</strong><br>{{ contractor.notes|default:"—"|linebreaksbr }}</p>
+    </div>
+
+   <h3>Услуги поставщика</h3>
+
+    {% if services %}
+        <div class="table-wrapper">
+            <table class="estimate-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Название услуги</th>
+                        <th>Себестоимость</th>
+                        <th>Цена клиенту</th>
+                        <th>Комментарий</th>
+                        <th>Медиа</th>
+                        <th>Активна</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for service in services %}
+                        <tr>
+                            <td>{{ service.id }}</td>
+                            <td>
+                                {% if can_manage_services_ui %}
+                                    <a href="{% url 'service_update' service.id %}?next={% url 'contractor_detail' contractor.id %}">
+                                        {{ service.name }}
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'service_detail' service.id %}?next={% url 'contractor_detail' contractor.id %}">
+                                        {{ service.name }}
+                                    </a>
+                                {% endif %}
+                            </td>
+                            <td>{{ service.cost_price|floatformat:2 }}</td>
+                            <td>{{ service.client_price|floatformat:2 }}</td>
+                            <td style="min-width: 320px; max-width: 480px; white-space: normal; line-height: 1.4;">
+                                {{ service.description|default:"—"|linebreaksbr }}
+                            </td>
+                            <td>
+                                {% if service.image_url %}
+                                    <a href="{{ service.image_url }}" target="_blank" rel="noopener noreferrer">Открыть</a>
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>{% if service.is_active %}Да{% else %}Нет{% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>У этого поставщика пока нет услуг.</p>
+    {% endif %}
+{% endblock %}

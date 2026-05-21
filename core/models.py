@@ -50,11 +50,11 @@ class EstimateDay(models.Model):
     title = models.CharField(max_length=255, blank=True)
     description = models.TextField(blank=True)
 
-class Meta:
-    ordering = ['day_number']
-    constraints = [
-        models.UniqueConstraint(fields=['estimate', 'day_number'], name='unique_day_number_per_estimate')
-    ]
+    class Meta:
+        ordering = ['day_number']
+        constraints = [
+            models.UniqueConstraint(fields=['estimate', 'day_number'], name='unique_day_number_per_estimate')
+        ]
 
     def __str__(self):
         if self.title:

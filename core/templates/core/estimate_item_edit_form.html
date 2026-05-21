@@ -1,0 +1,43 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Редактирование позиции сметы{% endblock %}
+
+{% block content %}
+    <h2>Редактировать позицию сметы</h2>
+
+    <div class="card" style="margin-bottom: 20px;">
+        <p><strong>Смета:</strong> №{{ estimate.id }} — {{ estimate.client_name }}</p>
+        <p><strong>День:</strong> {{ day.day_number }}{% if day.title %} — {{ day.title }}{% endif %}</p>
+    </div>
+
+    <div class="card" style="margin-bottom: 20px;">
+        <p><strong>Услуга:</strong> {{ item.service.name }}</p>
+        <p><strong>Поставщик:</strong> {{ item.service.contractor.name }}</p>
+        <p><strong>Себестоимость за единицу:</strong> {{ display_cost_price|floatformat:2 }}</p>
+        <p><strong>Текущая сумма себестоимости:</strong> {{ item.total_cost|floatformat:2 }}</p>
+        <p><strong>Текущая сумма клиенту:</strong> {{ item.total_client|floatformat:2 }}</p>
+
+        {% if item.service.description %}
+            <p><strong>Комментарий:</strong><br>{{ item.service.description|linebreaksbr }}</p>
+        {% endif %}
+
+        {% if item.service.image_url %}
+            <p>
+                <strong>Медиа:</strong>
+                <a href="{{ item.service.image_url }}" target="_blank" rel="noopener noreferrer">Открыть</a>
+            </p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button type="submit">Сохранить изменения</button>
+                <a class="button-link" href="{% url 'estimate_detail' estimate.id %}">Отмена</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}
