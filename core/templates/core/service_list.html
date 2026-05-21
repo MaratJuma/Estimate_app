@@ -76,16 +76,17 @@
                             
                             <td>
                                 {% if can_manage_services_ui %}
-                                    <a href="{% url 'service_update' service.id %}?next={% url 'service_list' %}">
+                                    <a href="{% url 'service_update' service.id %}?next={{ current_full_path|urlencode }}">
                                         {{ service.name }}
                                     </a>
                                 {% else %}
-                                    <a href="{% url 'service_detail' service.id %}?next={% url 'service_list' %}">
+                                    <a href="{% url 'service_detail' service.id %}?next={{ current_full_path|urlencode }}">
                                         {{ service.name }}
                                     </a>
                                 {% endif %}
                             </td>
                             
+
                             <!-- <td>{{ service.name }}</td> -->
                             
                             <td>

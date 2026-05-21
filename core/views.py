@@ -57,11 +57,17 @@ def service_list(request):
         .order_by('category')
     )
 
+    query_params = request.GET.copy()
+    if 'page' in query_params:
+        query_params.pop('page')
+
     return render(request, 'core/service_list.html', {
         'services': services,
         'query': query,
         'categories': categories,
         'selected_category': selected_category,
+        'query_params': query_params.urlencode(),
+        'current_full_path': request.get_full_path(),
     })
 
 @login_required
@@ -471,7 +477,7 @@ def estimate_item_delete(request, item_id):
         'item': item,
     })
 
-@login_required
+
 @login_required
 def estimate_item_update(request, item_id):
     if not can_edit_estimates(request.user):
@@ -537,7 +543,7 @@ def estimate_update(request, estimate_id):
         'estimate': estimate,
     })
 
-@login_required
+
 @login_required
 def estimate_day_create(request, estimate_id):
     if not can_edit_estimates(request.user):
