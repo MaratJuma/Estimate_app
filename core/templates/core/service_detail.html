@@ -1,46 +1,48 @@
 {% extends 'core/base.html' %}
+{% load money_filters %}
 
 {% block title %}Услуга: {{ service.name }}{% endblock %}
 
 {% block content %}
     <h2>Карточка услуги</h2>
 
-    <div class="card" style="margin-bottom: 20px;">
+    <div class="card">
         <p><strong>Название услуги:</strong> {{ service.name }}</p>
-        <p>
-            <strong>Поставщик:</strong>
-            <a href="{% url 'contractor_detail' service.contractor.id %}?next={{ current_full_path|urlencode }}">
-                {{ service.contractor.name }}
-            </a>
-        </p>
-        <p><strong>Себестоимость:</strong> {{ service.cost_price|floatformat:2 }}</p>
-        <p><strong>Цена клиенту:</strong> {{ service.client_price|floatformat:2 }}</p>
-        <p><strong>Комментарий:</strong><br>{{ service.description|default:"—"|linebreaksbr }}</p>
-        <p>
-            <strong>Медиа:</strong>
+        <p><strong>Поставщик:</strong> {{ service.contractor.name }}</p>
+        <p><strong>Себестоимость:</strong> {{ service.cost_price|money }}</p>
+        <p><strong>Цена для клиента:</strong> {{ service.client_price|money }}</p>
+        <p><strong>Комментарий по услуге:</strong> {{ service.description|default:"—" }}</p>
+        <p><strong>Медиа:</strong>
             {% if service.image_url %}
-                <a href="{{ service.image_url }}" target="_blank" rel="noopener noreferrer">Открыть</a>
+                <a href="{{ service.image_url }}" target="_blank" rel="noopener noreferrer">Открыть ссылку</a>
             {% else %}
                 —
             {% endif %}
         </p>
-        <p><strong>Активна:</strong> {% if service.is_active %}Да{% else %}Нет{% endif %}</p>
+        <p><strong>Статус:</strong> {% if service.is_active %}Активна{% else %}Неактивна{% endif %}</p>
     </div>
 
-    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    <div class="card">
+        <h3>Информация о поставщике</h3>
+        <p><strong>Название:</strong> {{ service.contractor.name }}</p>
+        <p><strong>Категория:</strong> {{ service.contractor.category|default:"—" }}</p>
+        <p><strong>Контактное лицо:</strong> {{ service.contractor.contact_name|default:"—" }}</p>
+        <p><strong>Телефон:</strong> {{ service.contractor.phone|default:"—" }}</p>
+        <p><strong>E-mail:</strong> {{ service.contractor.email|default:"—" }}</p>
+        <p><strong>Комментарий:</strong> {{ service.contractor.notes|default:"—" }}</p>
+
+        <p style="margin-top:12px;">
+            <a href="{% url 'contractor_detail' service.contractor.id %}" target="_blank" rel="noopener noreferrer">
+                Подробнее о поставщике
+            </a>
+        </p>
+    </div>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;">
         {% if next_url %}
             <a class="button-link" href="{{ next_url }}">Назад</a>
         {% else %}
-            <a class="button-link" href="{% url 'service_list' %}">Назад к списку услуг</a>
-        {% endif %}
-
-        {% if can_manage_services_ui %}
-            <a
-                class="button-link"
-                href="{% url 'service_update' service.id %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}"
-            >
-                Редактировать
-            </a>
+            <a class="button-link" href="{% url 'service_list' %}">Назад к услугам</a>
         {% endif %}
     </div>
 {% endblock %}

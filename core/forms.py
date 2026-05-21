@@ -15,6 +15,14 @@ class EstimateItemCreateForm(forms.ModelForm):
             'service': 'Услуга',
             'qty': 'Количество',
         }
+        labels = {
+            'client_name': 'Клиент',
+            'manager_name': 'Менеджер',
+            'comment': 'Комментарий',
+        }
+        widgets = {
+            'comment': forms.Textarea(attrs={'rows': 4}),
+        }
 
 
 class EstimateItemUpdateForm(forms.ModelForm):
@@ -24,6 +32,10 @@ class EstimateItemUpdateForm(forms.ModelForm):
         labels = {
             'qty': 'Количество',
             'client_price': 'Цена для клиента за единицу',
+        }
+        widgets = {
+            'qty': forms.NumberInput(attrs={'step': '0.01', 'min': '0.01'}),
+            'client_price': forms.NumberInput(attrs={'step': '0.01', 'min': '0'}),
         }
 
 
@@ -35,6 +47,10 @@ class EstimateDayCreateForm(forms.ModelForm):
             'title': 'Название дня',
             'description': 'Описание',
         }
+        widgets = {
+            'title': forms.TextInput(attrs={'placeholder': 'Например: День прилёта'}),
+            'description': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Описание программы дня'}),
+        }
 
 
 class EstimateDayUpdateForm(forms.ModelForm):
@@ -44,6 +60,10 @@ class EstimateDayUpdateForm(forms.ModelForm):
         labels = {
             'title': 'Название дня',
             'description': 'Описание',
+        }
+        widgets = {
+            'title': forms.TextInput(attrs={'placeholder': 'Например: День прилёта'}),
+            'description': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Описание программы дня'}),
         }
 
 
@@ -139,4 +159,7 @@ class EstimateItemQtyForm(forms.ModelForm):
         fields = ['qty']
         labels = {
             'qty': 'Количество',
+        }
+        widgets = {
+            'qty': forms.NumberInput(attrs={'step': '0.01', 'min': '0.01'}),
         }

@@ -3,8 +3,7 @@ from django.db.models import Q, F, Count
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from django.http import HttpResponseForbidden, HttpResponse
-from django.shortcuts import redirect
+from django.http import HttpResponse
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from decimal import Decimal
@@ -24,11 +23,9 @@ from .permissions import (
 from .models import Service, Estimate, EstimateDay, EstimateItem, Contractor
 from .forms import (
         EstimateForm, 
-        EstimateItemCreateForm,
         EstimateItemQtyForm, 
         EstimateItemUpdateForm, 
         ContractorForm, 
-        # ServiceForm, 
         ServiceCreateForm,
         ServiceForContractorCreateForm,
         ServiceUpdateForm, 
@@ -106,7 +103,6 @@ def service_update(request, service_id):
                 )
 
                 for item in estimate_items:
-                    current_cost_price = item.service.cost_price
                     item.cost_price = service.cost_price
                     item.total_cost = item.qty * service.cost_price
 
@@ -231,10 +227,9 @@ def contractor_detail(request, contractor_id):
 
 @login_required
 def estimate_list(request):
-
     if not can_view_estimates(request.user):
         return deny_access(request, 'У вас нет прав на просмотр смет.')
-    
+
     query = request.GET.get('q', '').strip()
 
     estimates = (
@@ -251,19 +246,15 @@ def estimate_list(request):
         )
 
     for estimate in estimates:
-        total_cost = 0
-        total_client = 0
+        total_cost = Decimal('0.00')
+        total_client = Decimal('0.00')
 
         for day in estimate.days.all():
             for item in day.items.all():
-                if estimate.is_approved:
-                    total_cost += item.total_cost
-                    total_client += item.total_client
-                else:
-                    total_cost += item.qty * item.service.cost_price
-                    total_client += item.qty * item.client_price
+                total_cost += item.total_cost
+                total_client += item.total_client
 
-        estimate.days_count = estimate.days.count()
+        estimate.days_count_value = estimate.days.count()
         estimate.total_cost_sum = total_cost
         estimate.total_client_sum = total_client
         estimate.margin_sum = total_client - total_cost
@@ -275,31 +266,24 @@ def estimate_list(request):
 
 @login_required
 def estimate_detail(request, estimate_id):
-
     if not can_view_estimates(request.user):
         return deny_access(request, 'У вас нет прав на просмотр смет.')
 
     estimate = get_object_or_404(Estimate, id=estimate_id)
     days = estimate.days.all().order_by('day_number').prefetch_related('items__service')
 
-    total_cost = 0
-    total_client = 0
+    total_cost = Decimal('0.00')
+    total_client = Decimal('0.00')
 
     for day in days:
-        day_cost = 0
-        day_client = 0
+        day_cost = Decimal('0.00')
+        day_client = Decimal('0.00')
 
         for item in day.items.all():
-            if estimate.is_approved:
-                item.display_cost_price = item.cost_price
-                item.display_total_cost = item.total_cost
-            else:
-                current_cost_price = item.service.cost_price
-                item.display_cost_price = current_cost_price
-                item.display_total_cost = item.qty * current_cost_price
-
+            item.display_cost_price = item.cost_price
+            item.display_total_cost = item.total_cost
             item.display_client_price = item.client_price
-            item.display_total_client = item.qty * item.client_price
+            item.display_total_client = item.total_client
 
             day_cost += item.display_total_cost
             day_client += item.display_total_client
@@ -311,10 +295,10 @@ def estimate_detail(request, estimate_id):
         total_client += day_client
 
     margin = total_client - total_cost
-    margin_percent = 0
+    margin_percent = Decimal('0.00')
 
     if total_client != 0:
-        margin_percent = (margin / total_client) * 100
+        margin_percent = (margin / total_client) * Decimal('100')
 
     return render(request, 'core/estimate_detail.html', {
         'estimate': estimate,
@@ -323,6 +307,7 @@ def estimate_detail(request, estimate_id):
         'total_client': total_client,
         'margin': margin,
         'margin_percent': margin_percent,
+        'days_count': days.count(),
     })
 
 @login_required
@@ -466,20 +451,20 @@ def estimate_item_create_for_service(request, day_id, service_id):
 
 @login_required
 def estimate_item_delete(request, item_id):
-
     if not can_edit_estimates(request.user):
         return deny_access(request, 'У вас нет прав на редактирование смет.')
-    
+
     item = get_object_or_404(EstimateItem, id=item_id)
     estimate_id = item.estimate_day.estimate.id
     estimate = item.estimate_day.estimate
 
     if estimate.is_approved:
-        messages.error(request, f'Смета #{estimate.id} утверждена. Добавление позиций запрещено.')
+        messages.error(request, f'Смета #{estimate.id} утверждена. Удаление позиций запрещено.')
         return redirect('estimate_detail', estimate_id=estimate.id)
 
     if request.method == 'POST':
         item.delete()
+        messages.success(request, 'Позиция удалена.')
         return redirect('estimate_detail', estimate_id=estimate_id)
 
     return render(request, 'core/estimate_item_confirm_delete.html', {
@@ -487,11 +472,11 @@ def estimate_item_delete(request, item_id):
     })
 
 @login_required
+@login_required
 def estimate_item_update(request, item_id):
-
     if not can_edit_estimates(request.user):
         return deny_access(request, 'У вас нет прав на редактирование смет.')
-    
+
     item = get_object_or_404(EstimateItem, id=item_id)
     estimate = item.estimate_day.estimate
 
@@ -499,7 +484,7 @@ def estimate_item_update(request, item_id):
         messages.error(request, f'Смета #{estimate.id} утверждена. Редактирование позиций запрещено.')
         return redirect('estimate_detail', estimate_id=estimate.id)
 
-    display_cost_price = item.service.cost_price
+    display_cost_price = item.cost_price
 
     if request.method == 'POST':
         form = EstimateItemUpdateForm(request.POST, instance=item)
@@ -507,14 +492,12 @@ def estimate_item_update(request, item_id):
             item = form.save(commit=False)
 
             qty = item.qty
-            current_cost_price = item.service.cost_price
-
-            item.cost_price = current_cost_price
-            item.total_cost = qty * current_cost_price
+            item.cost_price = item.service.cost_price
+            item.total_cost = qty * item.cost_price
             item.total_client = qty * item.client_price
-
             item.save()
 
+            messages.success(request, 'Позиция сметы обновлена.')
             return redirect('estimate_detail', estimate_id=estimate.id)
     else:
         form = EstimateItemUpdateForm(instance=item)
@@ -555,11 +538,11 @@ def estimate_update(request, estimate_id):
     })
 
 @login_required
+@login_required
 def estimate_day_create(request, estimate_id):
-
     if not can_edit_estimates(request.user):
         return deny_access(request, 'У вас нет прав на редактирование смет.')
-    
+
     estimate = get_object_or_404(Estimate, id=estimate_id)
 
     if estimate.is_approved:
@@ -578,6 +561,7 @@ def estimate_day_create(request, estimate_id):
             day.day_number = next_day_number
             day.save()
 
+            messages.success(request, f'День {next_day_number} добавлен.')
             return redirect('estimate_detail', estimate_id=estimate.id)
     else:
         form = EstimateDayCreateForm()
@@ -657,8 +641,11 @@ def estimate_day_delete(request, day_id):
 
 @login_required
 def estimate_duplicate(request, estimate_id):
+    if not can_edit_estimates(request.user):
+        return deny_access(request, 'У вас нет прав на создание копий смет.')
+
     source_estimate = get_object_or_404(
-        Estimate.objects.prefetch_related('days__items'),
+        Estimate.objects.prefetch_related('days__items__service'),
         id=estimate_id
     )
 
@@ -672,6 +659,8 @@ def estimate_duplicate(request, estimate_id):
             client_name=source_estimate.client_name,
             manager_name=source_estimate.manager_name,
             comment=new_comment,
+            is_approved=False,
+            approved_at=None,
         )
 
         day_mapping = {}
@@ -680,6 +669,8 @@ def estimate_duplicate(request, estimate_id):
             new_day = EstimateDay.objects.create(
                 estimate=new_estimate,
                 day_number=day.day_number,
+                title=day.title,
+                description=day.description,
             )
             day_mapping[day.id] = new_day
 
@@ -687,16 +678,24 @@ def estimate_duplicate(request, estimate_id):
             new_day = day_mapping[day.id]
 
             for item in day.items.all():
+                current_cost_price = item.service.cost_price
+                qty = item.qty
+                client_price = item.client_price
+
                 EstimateItem.objects.create(
                     estimate_day=new_day,
                     service=item.service,
-                    qty=item.qty,
-                    cost_price=item.cost_price,
-                    client_price=item.client_price,
-                    total_cost=item.total_cost,
-                    total_client=item.total_client,
+                    qty=qty,
+                    cost_price=current_cost_price,
+                    client_price=client_price,
+                    total_cost=qty * current_cost_price,
+                    total_client=qty * client_price,
                 )
 
+        messages.success(
+            request,
+            f'Смета #{source_estimate.id} успешно скопирована. Себестоимость позиций актуализирована.'
+        )
         return redirect('estimate_detail', estimate_id=new_estimate.id)
 
     return render(request, 'core/estimate_duplicate_confirm.html', {
@@ -805,11 +804,14 @@ def service_create_for_contractor(request, contractor_id):
 
 @login_required
 def estimate_print(request, estimate_id):
+    if not can_view_estimates(request.user):
+        return deny_access(request, 'У вас нет прав на просмотр смет.')
+
     estimate = get_object_or_404(Estimate, id=estimate_id)
     all_days = estimate.days.all().order_by('day_number').prefetch_related('items__service')
     days = []
 
-    total_client = 0
+    total_client = Decimal('0.00')
 
     for day in all_days:
         items = list(day.items.all())
@@ -818,7 +820,7 @@ def estimate_print(request, estimate_id):
 
         day.items_list = items
 
-        day_total_client = 0
+        day_total_client = Decimal('0.00')
         for item in items:
             day_total_client += item.total_client
 
@@ -829,10 +831,10 @@ def estimate_print(request, estimate_id):
     company = {
         'name': 'SakhTravel',
         'tagline': 'Объединяя мечты',
-        'phone': '+7 (999) 123-45-67',
-        'email': 'info@company.ru',
+        'phone': '<<IDS_0002>>',
+        'email': '<<IDS_0003>>',
         'site': 'www.sakhtravel.ru',
-        'address': 'Южно-Cахалинск, Россия',
+        'address': '<<LOC_0001>>, <<LOC_0002>>',
         'manager_title': 'Менеджер проекта',
         'manager_name': estimate.manager_name,
     }
@@ -857,10 +859,9 @@ def estimate_print(request, estimate_id):
 
 @login_required
 def estimate_approve(request, estimate_id):
-
     if not can_approve_estimates(request.user):
         return deny_access(request, 'У вас нет прав на утверждение смет.')
-    
+
     estimate = get_object_or_404(Estimate, id=estimate_id)
 
     if estimate.is_approved:
@@ -870,10 +871,8 @@ def estimate_approve(request, estimate_id):
     if request.method == 'POST':
         for day in estimate.days.all().prefetch_related('items__service'):
             for item in day.items.all():
-                current_cost_price = item.service.cost_price
-
-                item.cost_price = current_cost_price
-                item.total_cost = item.qty * current_cost_price
+                item.cost_price = item.service.cost_price
+                item.total_cost = item.qty * item.cost_price
                 item.total_client = item.qty * item.client_price
                 item.save()
 
@@ -1038,18 +1037,11 @@ def estimate_excel_export(request, estimate_id):
             first_row_for_day = True
 
             for item in day_items:
-                if estimate.is_approved:
-                    qty = item.qty or Decimal('0')
-                    cost_price = item.cost_price or Decimal('0')
-                    total_cost = item.total_cost or Decimal('0')
-                    client_price = item.client_price or Decimal('0')
-                    total_client = item.total_client or Decimal('0')
-                else:
-                    qty = item.qty or Decimal('0')
-                    cost_price = item.cost_price or Decimal('0')
-                    client_price = item.client_price or Decimal('0')
-                    total_cost = qty * cost_price
-                    total_client = qty * client_price
+                qty = item.qty or Decimal('0')
+                cost_price = item.cost_price or Decimal('0')
+                client_price = item.client_price or Decimal('0')
+                total_cost = item.total_cost or Decimal('0')
+                total_client = item.total_client or Decimal('0')
 
                 margin = total_client - total_cost
                 margin_percent = (margin / total_client) if total_client else Decimal('0')

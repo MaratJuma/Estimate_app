@@ -4,87 +4,76 @@
 
 {% block content %}
 {% load money_filters %}
-    <h2>Смета #{{ estimate.id }}
-        {% if estimate.is_approved %}
-            <span style="color: green; font-size: 16px;">[Утверждена]</span>
-        {% endif %}
-        {% if estimate.is_approved and estimate.approved_at %}
-            <p class="muted">Утверждена: {{ estimate.approved_at|date:"d.m.Y H:i" }}</p>
-        {% endif %}
-    </h2>
 
+<h2>
+    Смета #{{ estimate.id }}
+    {% if estimate.is_approved %}
+        <span style="color: green; font-size: 16px;">[Утверждена]</span>
+    {% endif %}
+</h2>
 
+{% if estimate.is_approved and estimate.approved_at %}
+    <p class="muted">Утверждена: {{ estimate.approved_at|date:"d.m.Y H:i" }}</p>
+{% endif %}
+
+<div class="card">
+    <p><strong>Клиент:</strong> {{ estimate.client_name }}</p>
+    <p><strong>Менеджер:</strong> {{ estimate.manager_name }}</p>
+    <p><strong>Комментарий:</strong> {{ estimate.comment|default:"—" }}</p>
+    <p><strong>Создана:</strong> {{ estimate.created_at|date:"d.m.Y H:i" }}</p>
+    <p><strong>Количество дней:</strong> {{ days_count }}</p>
+</div>
+
+<div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+    {% if can_edit_estimates_ui and not estimate.is_approved %}
+        <a class="button-link" href="{% url 'estimate_update' estimate.id %}">Редактировать смету</a>
+    {% endif %}
+
+    {% if can_approve_estimates_ui and not estimate.is_approved %}
+        <a class="button-link" href="{% url 'estimate_approve' estimate.id %}">Утвердить смету</a>
+    {% endif %}
+
+    <a class="button-link" href="{% url 'estimate_print' estimate.id %}" target="_blank">Печать</a>
+    <a class="button-link" href="{% url 'estimate_excel_export' estimate.id %}">
+        Excel рабочей сметы
+    </a>
+</div>
+
+<hr>
+
+<div style="margin-bottom:16px;">
+    {% if can_edit_estimates_ui and not estimate.is_approved %}
+        <a class="button-link" href="{% url 'estimate_day_create' estimate.id %}">Добавить день</a>
+    {% endif %}
+</div>
+
+{% for day in days %}
     <div class="card">
-        <p><strong>Клиент:</strong> {{ estimate.client_name }}</p>
-        <p><strong>Менеджер:</strong> {{ estimate.manager_name }}</p>
-        <p><strong>Комментарий:</strong> {{ estimate.comment|default:"—" }}</p>
-        <p><strong>Создана:</strong> {{ estimate.created_at|date:"d.m.Y H:i" }}</p>
-        <p><strong>Количество дней:</strong> {{ estimate.days.count }}</p>
-    </div>
-
-
-    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
-        {% if can_edit_estimates_ui and not estimate.is_approved %}
-            <a class="button-link" href="{% url 'estimate_update' estimate.id %}">Редактировать смету</a>
-            <!-- <a class="button-link" href="{% url 'estimate_day_create' estimate.id %}">Добавить день</a> -->
-        {% endif %}
-
-        {% if can_approve_estimates_ui and not estimate.is_approved %}
-            <a class="button-link" href="{% url 'estimate_approve' estimate.id %}">Утвердить смету</a>
-        {% endif %}
-
-         <a class="button-link" href="{% url 'estimate_print' estimate.id %}" target="_blank">Печать</a>
-         <a class="button-link" href="{% url 'estimate_excel_export' estimate.id %}">
-            Excel рабочей сметы
-        </a>
-    </div>
-
-    <!-- <form method="post" action="{% url 'estimate_day_create' estimate.id %}">
-        {% csrf_token %}
-        {% if can_edit_estimates_ui and not estimate.is_approved %}
-            <button type="submit">Добавить день</button>
-        {% endif %}
-    </form> -->
-
-    <hr>
-
-    <h3> 
-        <!-- Дни события -->
-
-        <form method="post" action="{% url 'estimate_day_create' estimate.id %}">
-            {% csrf_token %}
-            {% if can_edit_estimates_ui and not estimate.is_approved %}
-                <button type="submit">Добавить день</button>
-            {% endif %}
-        </form>
-
-    </h3>
-
-    
-
-    {% for day in days %}
-    <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;">
-            <h4 style="margin:0;">День {{ day.day_number }}
-                                    {% if day.title %}
-                                        — {{ day.title }}
-                                    {% endif %}
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+            <h4 style="margin:0;">
+                День {{ day.day_number }}
+                {% if day.title %}
+                    — {{ day.title }}
+                {% endif %}
             </h4>
 
-            {% if day.description %}
-                <p class="muted">{{ day.description|linebreaksbr }}</p>
-            {% endif %}
-                
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            {% if can_edit_estimates_ui and not estimate.is_approved %}
-                <a href="{% url 'estimate_day_update' day.id %}">Редактировать день</a>
-                |
-                <a href="{% url 'estimate_day_delete' day.id %}">Удалить день</a>
-                |
-                <a href="{% url 'estimate_item_create' day.id %}">Добавить позицию</a>
-            {% endif %}
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                {% if can_edit_estimates_ui and not estimate.is_approved %}
+                    <a href="{% url 'estimate_day_update' day.id %}">Редактировать день</a>
+                    |
+                    <a href="{% url 'estimate_item_create' day.id %}">Добавить позицию</a>
+
+                    {% if not day.items.exists %}
+                        |
+                        <a href="{% url 'estimate_day_delete' day.id %}">Удалить день</a>
+                    {% endif %}
+                {% endif %}
+            </div>
         </div>
-</div>
+
+        {% if day.description %}
+            <p class="muted" style="margin-top:10px;">{{ day.description|linebreaksbr }}</p>
+        {% endif %}
 
         {% if day.items.count %}
             <div class="table-wrapper">
@@ -156,34 +145,34 @@
     </div>
 {% endfor %}
 
-    <div class="card">
-        <h3>Общий итог по смете</h3>
+<div class="card">
+    <h3>Общий итог по смете</h3>
 
-        <div class="table-wrapper">
-            <table class="estimate-table">
-                <tbody>
-                    <tr class="total-row">
-                        <td><strong>Общая себестоимость</strong></td>
-                        <td>{{ total_cost|money }}</td>
-                    </tr>
-                    <tr class="total-row">
-                        <td><strong>Общая сумма клиенту</strong></td>
-                        <td>{{ total_client|money }}</td>
-                    </tr>
-                    <tr class="total-row">
-                        <td><strong>Общая маржа</strong></td>
-                        <td>{{ margin|money }}</td>
-                    </tr>
-                    <tr class="total-row">
-                        <td><strong>Процент маржи</strong></td>
-                        <td>{{ margin_percent|money }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+    <div class="table-wrapper">
+        <table class="estimate-table">
+            <tbody>
+                <tr class="total-row">
+                    <td><strong>Общая себестоимость</strong></td>
+                    <td>{{ total_cost|money }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td><strong>Общая сумма клиенту</strong></td>
+                    <td>{{ total_client|money }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td><strong>Общая маржа</strong></td>
+                    <td>{{ margin|money }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td><strong>Процент маржи</strong></td>
+                    <td>{{ margin_percent|floatformat:2 }}%</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
+</div>
 
-    <p>
-        <a class="button-link" href="{% url 'estimate_list' %}">Назад к списку смет</a>
-    </p>
+<p>
+    <a class="button-link" href="{% url 'estimate_list' %}">Назад к списку смет</a>
+</p>
 {% endblock %}
