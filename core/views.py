@@ -8,6 +8,8 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from decimal import Decimal
 from django.utils.text import slugify
+from django.urls import reverse
+from urllib.parse import urlencode
 
 from .permissions import (
         can_view_estimates,
@@ -191,6 +193,7 @@ def contractor_list(request):
         'query': query,
         'categories': categories,
         'selected_category': selected_category,
+        'current_full_path': request.get_full_path(),
     })
 
 @login_required
@@ -200,11 +203,17 @@ def contractor_update(request, contractor_id):
         return deny_access(request, 'У вас нет прав на управление поставщиками.')
     
     contractor = get_object_or_404(Contractor, id=contractor_id)
+    next_url = request.GET.get('next') or request.POST.get('next')
 
     if request.method == 'POST':
         form = ContractorForm(request.POST, instance=contractor)
         if form.is_valid():
             form.save()
+            messages.success(request, f'Поставщик "{contractor.name}" обновлён.')
+
+            detail_url = reverse('contractor_detail', args=[contractor.id])
+            if next_url:
+                return redirect(f'{detail_url}?{urlencode({"next": next_url})}')
             return redirect('contractor_detail', contractor_id=contractor.id)
     else:
         form = ContractorForm(instance=contractor)
@@ -213,6 +222,7 @@ def contractor_update(request, contractor_id):
         'form': form,
         'is_edit': True,
         'contractor': contractor,
+        'next_url': next_url,
     })
 
 @login_required
@@ -224,11 +234,19 @@ def contractor_detail(request, contractor_id):
     contractor = get_object_or_404(Contractor, id=contractor_id)
     services = contractor.services.all().order_by('name', 'id')
     next_url = request.GET.get('next')
+    
+    contractor_detail_base_url = reverse('contractor_detail', args=[contractor.id])
+    contractor_detail_return_url = contractor_detail_base_url
+
+    if next_url:
+        contractor_detail_return_url = f'{contractor_detail_base_url}?{urlencode({"next": next_url})}'
 
     return render(request, 'core/contractor_detail.html', {
         'contractor': contractor,
         'services': services,
         'next_url': next_url,
+        'contractor_detail_base_url': contractor_detail_base_url,
+        'contractor_detail_return_url': contractor_detail_return_url,
     })
 
 @login_required
@@ -714,23 +732,21 @@ def contractor_create(request):
     if not can_manage_contractors(request.user):
         return deny_access(request, 'У вас нет прав на управление поставщиками.')
     
-    next_url = request.GET.get('next') or request.POST.get('next')
+    # next_url = request.GET.get('next') or request.POST.get('next')
 
     if request.method == 'POST':
         form = ContractorForm(request.POST)
         if form.is_valid():
-            form.save()
-
-            if next_url:
-                return redirect(next_url)
-
-            return redirect('service_list')
+            contractor = form.save()
+            messages.success(request, f'Поставщик "{contractor.name}" создан.')
+            return redirect('contractor_list')
     else:
         form = ContractorForm()
 
     return render(request, 'core/contractor_form.html', {
         'form': form,
-        'next_url': next_url,
+        # 'next_url': next_url,
+        'is_edit': False,
     })
 
 
@@ -788,6 +804,7 @@ def service_create_for_contractor(request, contractor_id):
         return deny_access(request, 'У вас нет прав на управление услугами.')
 
     contractor = get_object_or_404(Contractor, id=contractor_id)
+    next_url = request.GET.get('next') or request.POST.get('next')
 
     if request.method == 'POST':
         form = ServiceForContractorCreateForm(request.POST)
@@ -795,7 +812,15 @@ def service_create_for_contractor(request, contractor_id):
             service = form.save(commit=False)
             service.contractor = contractor
             service.save()
-            messages.success(request, 'Услуга создана.')
+
+            messages.success(
+                request,
+                f'Услуга "{service.name}" добавлена для поставщика "{contractor.name}".'
+            )
+
+            detail_url = reverse('contractor_detail', args=[contractor.id])
+            if next_url:
+                return redirect(f'{detail_url}?{urlencode({"next": next_url})}')
             return redirect('contractor_detail', contractor_id=contractor.id)
     else:
         form = ServiceForContractorCreateForm()
@@ -805,6 +830,7 @@ def service_create_for_contractor(request, contractor_id):
         'is_edit': False,
         'contractor': contractor,
         'is_contractor_context': True,
+        'next_url': next_url,
     })
 
 

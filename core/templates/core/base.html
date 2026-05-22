@@ -245,16 +245,17 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <nav>
                 <a href="{% url 'home' %}">Главная</a>
-                {% if can_view_estimates_ui %}
-                    <a href="{% url 'estimate_list' %}">Сметы</a>
-                {% endif %}
 
+                {% if user.is_authenticated %}
+                    <a href="{% url 'contractor_list' %}">Поставщики</a>
+                {% endif %}
+                
                 {% if user.is_authenticated %}
                     <a href="{% url 'service_list' %}">Услуги</a>
                 {% endif %}
 
-                {% if user.is_authenticated %}
-                    <a href="{% url 'contractor_list' %}">Поставщики</a>
+                {% if can_view_estimates_ui %}
+                    <a href="{% url 'estimate_list' %}">Сметы</a>
                 {% endif %}
 
                 {% if user.is_authenticated and is_admin_user %}

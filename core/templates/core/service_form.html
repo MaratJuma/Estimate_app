@@ -33,6 +33,10 @@
             <h3>Поиск и фильтр поставщиков</h3>
 
             <form method="get">
+
+                {% if next_url %}
+                    <input type="hidden" name="next" value="{{ next_url }}">
+                {% endif %}
                 <p>
                     <label for="id_q"><strong>Поиск по названию:</strong></label>
                     <input
@@ -75,6 +79,7 @@
 
     <div class="card">
         <form method="post">
+            
             {% csrf_token %}
 
             {% if query %}

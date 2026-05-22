@@ -73,7 +73,7 @@
                         <tr>
                             <td>{{ contractor.id }}</td>
                             <td>
-                                <a href="{% url 'contractor_detail' contractor.id %}">
+                                <a href="{% url 'contractor_detail' contractor.id %}?next={{ current_full_path|urlencode }}">
                                     {{ contractor.name }}
                                 </a>
                             </td>

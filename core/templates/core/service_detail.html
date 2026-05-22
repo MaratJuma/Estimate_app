@@ -31,11 +31,11 @@
         <p><strong>E-mail:</strong> {{ service.contractor.email|default:"—" }}</p>
         <p><strong>Комментарий:</strong> {{ service.contractor.notes|default:"—" }}</p>
 
-        <p style="margin-top:12px;">
-            <a href="{% url 'contractor_detail' service.contractor.id %}" target="_blank" rel="noopener noreferrer">
-                Подробнее о поставщике
+        <!-- <p style="margin-top:12px;">
+            <a href="{% url 'contractor_detail' service.contractor.id %}?next={{ request.get_full_path|urlencode }}"
+                >Подробнее о поставщике
             </a>
-        </p>
+        </p> -->
     </div>
 
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;">

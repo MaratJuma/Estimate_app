@@ -7,18 +7,23 @@
     <h2>Поставщик: {{ contractor.name }}</h2>
 
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
-        {% if next_url %}
+        <!-- {% if next_url %}
             <a class="button-link" href="{{ next_url }}">Назад</a>
         {% else %}
             <a class="button-link" href="{% url 'contractor_list' %}">Список поставщиков</a>
-        {% endif %}
+        {% endif %} -->
 
         {% if can_manage_contractors_ui %}
-            <a class="button-link" href="{% url 'contractor_update' contractor.id %}">Редактировать информацию о поставщике</a>
+            <a class="button-link" href="{% url 'contractor_update' contractor.id %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}">
+                Редактировать информацию о поставщике
+            </a>
         {% endif %}
 
+
         {% if can_manage_services_ui %}
-            <a class="button-link" href="{% url 'service_create_for_contractor' contractor.id %}">Добавить услугу</a>
+            <a class="button-link" href="{% url 'service_create_for_contractor' contractor.id %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}">
+                Добавить услугу
+            </a>
         {% endif %}
     </div>
 
@@ -53,11 +58,11 @@
                             <td>{{ service.id }}</td>
                             <td>
                                 {% if can_manage_services_ui %}
-                                    <a href="{% url 'service_update' service.id %}?next={% url 'contractor_detail' contractor.id %}">
+                                    <a href="{% url 'service_update' service.id %}?next={{ contractor_detail_return_url|urlencode }}">
                                         {{ service.name }}
                                     </a>
                                 {% else %}
-                                    <a href="{% url 'service_detail' service.id %}?next={% url 'contractor_detail' contractor.id %}">
+                                    <a href="{% url 'service_detail' service.id %}?next={{ contractor_detail_return_url|urlencode }}">
                                         {{ service.name }}
                                     </a>
                                 {% endif %}
@@ -83,4 +88,17 @@
     {% else %}
         <p>У этого поставщика пока нет услуг.</p>
     {% endif %}
+
+    <div>
+
+
+    </div>    
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; margin-top:16px;">
+        {% if next_url %}
+            <a class="button-link" href="{{ next_url }}">Назад</a>
+        {% else %}
+            <a class="button-link" href="{% url 'contractor_list' %}">Список поставщиков</a>
+        {% endif %}
+    </div>
 {% endblock %}
