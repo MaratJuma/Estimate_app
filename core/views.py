@@ -375,6 +375,7 @@ def estimate_detail(request, estimate_id):
         'margin': margin,
         'margin_percent': margin_percent,
         'days_count': days.count(),
+        'current_full_path': request.get_full_path(),
     })
 
 @login_required

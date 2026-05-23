@@ -107,7 +107,12 @@
                     <tbody>
                         {% for item in day.items.all %}
                             <tr>
-                                <td>{{ item.service.name }}</td>
+                                <!-- <td>{{ item.service.name }}</td> -->
+                                <td>
+                                 <a href="{% url 'service_detail' item.service.id %}?next={{ current_full_path|urlencode }}">
+                                        {{ item.service.name }}
+                                </a>
+                                </td>
                                 <td>
                                     {% if item.service and item.service.image_url %}
                                         <a href="{{ item.service.image_url }}" target="_blank" rel="noopener noreferrer">Ссылка</a>
