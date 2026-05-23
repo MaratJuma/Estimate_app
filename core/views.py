@@ -234,6 +234,7 @@ def contractor_update(request, contractor_id):
     contractor = get_object_or_404(Contractor, id=contractor_id)
     next_url = request.GET.get('next') or request.POST.get('next')
 
+
     if request.method == 'POST':
         form = ContractorForm(request.POST, instance=contractor)
         if form.is_valid():
@@ -252,6 +253,8 @@ def contractor_update(request, contractor_id):
         'is_edit': True,
         'contractor': contractor,
         'next_url': next_url,
+        'current_full_path': request.get_full_path(),
+        
     })
 
 @login_required
