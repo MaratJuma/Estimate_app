@@ -234,7 +234,6 @@ def contractor_update(request, contractor_id):
     contractor = get_object_or_404(Contractor, id=contractor_id)
     next_url = request.GET.get('next') or request.POST.get('next')
 
-
     if request.method == 'POST':
         form = ContractorForm(request.POST, instance=contractor)
         if form.is_valid():
@@ -253,8 +252,7 @@ def contractor_update(request, contractor_id):
         'is_edit': True,
         'contractor': contractor,
         'next_url': next_url,
-        'current_full_path': request.get_full_path(),
-        
+        'current_full_path': request.get_full_path(),   
     })
 
 @login_required
@@ -922,7 +920,7 @@ def estimate_print(request, estimate_id):
         'phone': '+7 (934) 477-30-08',
         'email': 'go@sakhtravel.com',
         'site': 'www.sakhtravel.com',
-        'address': 'г. Южно-Сахалинск, Есенина 1 (ТЦ ГРАНД, цокольный этаж)',
+        'address': 'г. Южно-Сахалинск, Есенина 1',
         'manager_title': 'Менеджер проекта',
         'manager_name': estimate.manager_name,
     }
