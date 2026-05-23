@@ -2,7 +2,7 @@ from django.db import models
 
 class Contractor(models.Model):
     name = models.CharField(max_length=255)
-    category = models.CharField(max_length=100, blank=True)
+    category = models.CharField(max_length=100)
     contact_name = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=50, blank=True)
     email = models.EmailField(blank=True)

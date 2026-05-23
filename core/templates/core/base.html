@@ -38,7 +38,7 @@
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1280px;
             margin: 30px auto;
             background: white;
             padding: 30px;
@@ -142,10 +142,12 @@
         .table-wrapper {
             overflow-x: auto;
             margin-top: 16px;
+            width: 100%;
         }
 
         .estimate-table {
-             width: 100%;
+            width: 100%;
+            table-layout: fixed;
             border-collapse: collapse;
             background: white;
             font-size: 13px;
@@ -157,6 +159,8 @@
             padding: 6px 8px;
             text-align: left;
             vertical-align: top;
+            word-wrap: break-word;
+            overflow-wrap: anywhere;
         }
 
         .estimate-table th {
@@ -231,8 +235,94 @@
             box-sizing: border-box;
         }
 
-        .table-wrapper {
-            overflow-x: auto;
+
+        .pagination-wrapper {
+            margin: 16px 0 18px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .pagination {
+            display: grid;
+            grid-template-columns: 96px 326px 96px;
+            align-items: center;
+            column-gap: 12px;
+        }
+
+        .pagination-side {
+            display: grid;
+            grid-template-columns: 44px 44px;
+            gap: 8px;
+        }
+
+        .pagination-pages {
+            display: grid;
+            grid-template-columns: repeat(7, 38px);
+            gap: 8px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .pagination-link,
+        .pagination-dots,
+        .pagination-slot-empty {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1;
+            text-decoration: none;
+            box-sizing: border-box;
+        }
+
+        .pagination-nav {
+            width: 44px;
+            min-width: 44px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .pagination-link {
+            color: #1f2937;
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            transition: all 0.15s ease;
+        }
+
+        .pagination-link:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+
+        .pagination-link-active {
+            background: #3498db;
+            color: #ffffff;
+            border: 1px solid #3498db;
+            font-weight: 600;
+            cursor: default;
+        }
+
+        .pagination-link-disabled {
+            color: #9ca3af;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .pagination-dots {
+            color: #6b7280;
+            background: transparent;
+            border: none;
+            cursor: default;
+        }
+
+        .pagination-slot-empty {
+            visibility: hidden;
         }
 
     </style>
@@ -249,7 +339,7 @@
                 {% if user.is_authenticated %}
                     <a href="{% url 'contractor_list' %}">Поставщики</a>
                 {% endif %}
-                
+
                 {% if user.is_authenticated %}
                     <a href="{% url 'service_list' %}">Услуги</a>
                 {% endif %}

@@ -51,21 +51,30 @@
                 {% if selected_category %} категория "{{ selected_category }}" {% endif %}
             </p>
         {% endif %}
+
+        {% if page_obj %}
+            <p class="muted">
+                Найдено поставщиков: {{ page_obj.paginator.count }}.
+                Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}.
+            </p>
+        {% endif %}
     </div>
 
     {% if contractors %}
+        <!-- {% include 'core/includes/pagination.html' %} -->
+
         <div class="table-wrapper">
             <table class="estimate-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Название</th>
-                        <th>Категория</th>
-                        <th>Контактное лицо</th>
-                        <th>Телефон</th>
-                        <th>E-mail</th>
-                        <th>Кол-во услуг</th>
-                        <th>Комментарий</th>
+                        <th style="width: 20px;">ID</th>
+                        <th style="width: 150px;">Поставщик</th>
+                        <th style="width: 100px;">Категория</th>
+                        <th style="width: 30px;">Услуг</th>
+                        <th style="width: 220px;">Комментарий</th>
+                        <th style="width: 150px;">Контактное лицо</th>
+                        <th style="width: 100px;">Телефон</th>
+                        <th style="width: 150px;">E-mail</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -78,18 +87,21 @@
                                 </a>
                             </td>
                             <td>{{ contractor.category|default:"—" }}</td>
+                            <td>{{ contractor.services_count }}</td>
+                            <td style="max-width: 320px; white-space: normal; line-height: 1.4;">
+                                {{ contractor.notes|default:"—"|truncatechars:200 }}
+                            </td>
                             <td>{{ contractor.contact_name|default:"—" }}</td>
                             <td>{{ contractor.phone|default:"—" }}</td>
                             <td>{{ contractor.email|default:"—" }}</td>
-                            <td>{{ contractor.services_count }}</td>
-                            <td style="max-width: 320px; white-space: normal; line-height: 1.4;">
-                                {{ contractor.notes|default:"—"|linebreaksbr }}
-                            </td>
+                            
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+
+        {% include 'core/includes/pagination.html' %}
     {% else %}
         <p>Поставщики не найдены.</p>
     {% endif %}

@@ -14,14 +14,14 @@
         {% endif %} -->
 
         {% if can_manage_contractors_ui %}
-            <a class="button-link" href="{% url 'contractor_update' contractor.id %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}">
+            <a class="button-link" href="{% url 'contractor_update' contractor.id %}?next={{ contractor_detail_return_url|urlencode }}">
                 Редактировать информацию о поставщике
             </a>
         {% endif %}
 
 
         {% if can_manage_services_ui %}
-            <a class="button-link" href="{% url 'service_create_for_contractor' contractor.id %}{% if next_url %}?next={{ next_url|urlencode }}{% endif %}">
+            <a class="button-link" href="{% url 'service_create_for_contractor' contractor.id %}?next={{ contractor_detail_return_url|urlencode }}">
                 Добавить услугу
             </a>
         {% endif %}
@@ -43,13 +43,13 @@
             <table class="estimate-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Название услуги</th>
-                        <th>Себестоимость</th>
-                        <th>Цена клиенту</th>
-                        <th>Комментарий</th>
-                        <th>Медиа</th>
-                        <th>Активна</th>
+                        <th style="width: 20px;">ID</th>
+                        <th style="width: 150px;">Название услуги</th>
+                        <th style="width: 90px;">Себестоимость</th>
+                        <th style="width: 90px;">Цена клиенту</th>
+                        <th style="width: 250px;">Комментарий</th>
+                        <th style="width: 50px;">Медиа</th>
+                        <th style="width: 35px;">Активна</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -70,7 +70,7 @@
                             <td>{{ service.cost_price|floatformat:2 }}</td>
                             <td>{{ service.client_price|floatformat:2 }}</td>
                             <td style="min-width: 320px; max-width: 480px; white-space: normal; line-height: 1.4;">
-                                {{ service.description|default:"—"|linebreaksbr }}
+                                {{ service.description|default:"—"|truncatechars:200 }}
                             </td>
                             <td>
                                 {% if service.image_url %}

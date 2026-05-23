@@ -10,6 +10,8 @@ from decimal import Decimal
 from django.utils.text import slugify
 from django.urls import reverse
 from urllib.parse import urlencode
+from django.core.paginator import Paginator
+from core.utils import build_pagination_slots
 
 from .permissions import (
         can_view_estimates,
@@ -41,10 +43,16 @@ def home(request):
 
 @login_required
 def service_list(request):
+    # if not can_view_services(request.user):
+    #     return deny_access(request, 'У вас нет прав на просмотр услуг.')
+
     query = request.GET.get('q', '').strip()
     selected_category = request.GET.get('category', '').strip()
 
-    services = Service.objects.select_related('contractor').order_by('-id')
+    services = (
+        Service.objects.select_related('contractor')
+        .order_by('-id')
+    )
 
     if query:
         services = services.filter(name__icontains=query)
@@ -53,18 +61,27 @@ def service_list(request):
         services = services.filter(contractor__category=selected_category)
 
     categories = (
-        Contractor.objects.exclude(category='')
+        Contractor.objects.exclude(category__isnull=True)
+        .exclude(category__exact='')
         .values_list('category', flat=True)
         .distinct()
         .order_by('category')
     )
 
+    paginator = Paginator(services, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     query_params = request.GET.copy()
     if 'page' in query_params:
         query_params.pop('page')
 
+    pagination_slots = build_pagination_slots(page_obj)
+
     return render(request, 'core/service_list.html', {
-        'services': services,
+        'services': page_obj,
+        'page_obj': page_obj,
+        'pagination_slots': pagination_slots,
         'query': query,
         'categories': categories,
         'selected_category': selected_category,
@@ -161,13 +178,11 @@ def service_delete(request, service_id):
 @login_required
 def contractor_list(request):
 
-   # if not can_manage_contractors(request.user):
-   #     return deny_access(request, 'У вас нет прав на управление поставщиками.')
+    # if not can_manage_contractors(request.user):
+    #     return deny_access(request, 'У вас нет прав на управление поставщиками.')
     
     query = request.GET.get('q', '').strip()
     selected_category = request.GET.get('category', '').strip()
-
-    # contractors = Contractor.objects.all().order_by('-id')
 
     contractors = (
         Contractor.objects
@@ -182,18 +197,32 @@ def contractor_list(request):
         contractors = contractors.filter(category=selected_category)
 
     categories = (
-        Contractor.objects.exclude(category='')
+        Contractor.objects.exclude(category__isnull=True)
+        .exclude(category__exact='')
         .values_list('category', flat=True)
         .distinct()
         .order_by('category')
     )
 
+    paginator = Paginator(contractors, 15)  # 15 поставщиков на страницу
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    query_params = request.GET.copy()
+    if 'page' in query_params:
+        query_params.pop('page')
+
+    pagination_slots = build_pagination_slots(page_obj)
+
     return render(request, 'core/contractor_list.html', {
-        'contractors': contractors,
+        'contractors': page_obj,
+        'page_obj': page_obj,
+        'pagination_slots': pagination_slots,
         'query': query,
         'categories': categories,
         'selected_category': selected_category,
         'current_full_path': request.get_full_path(),
+        'query_params': query_params.urlencode(),
     })
 
 @login_required
@@ -211,9 +240,9 @@ def contractor_update(request, contractor_id):
             form.save()
             messages.success(request, f'Поставщик "{contractor.name}" обновлён.')
 
-            detail_url = reverse('contractor_detail', args=[contractor.id])
             if next_url:
-                return redirect(f'{detail_url}?{urlencode({"next": next_url})}')
+                return redirect(next_url)
+
             return redirect('contractor_detail', contractor_id=contractor.id)
     else:
         form = ContractorForm(instance=contractor)
@@ -269,7 +298,11 @@ def estimate_list(request):
             Q(comment__icontains=query)
         )
 
-    for estimate in estimates:
+    paginator = Paginator(estimates, 15)  # 15 смет на страницу
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    for estimate in page_obj:
         total_cost = Decimal('0.00')
         total_client = Decimal('0.00')
 
@@ -283,9 +316,18 @@ def estimate_list(request):
         estimate.total_client_sum = total_client
         estimate.margin_sum = total_client - total_cost
 
+    query_params = request.GET.copy()
+    if 'page' in query_params:
+        query_params.pop('page')
+
+    pagination_slots = build_pagination_slots(page_obj)    
+
     return render(request, 'core/estimate_list.html', {
-        'estimates': estimates,
+        'estimates': page_obj,
+        'page_obj': page_obj,
+        'pagination_slots': pagination_slots,
         'query': query,
+        'query_params': query_params.urlencode(),
     })
 
 @login_required
@@ -357,7 +399,6 @@ def estimate_create(request):
 
 @login_required
 def estimate_item_create(request, day_id):
-
     if not can_edit_estimates(request.user):
         return deny_access(request, 'У вас нет прав на редактирование смет.')
 
@@ -419,10 +460,23 @@ def estimate_item_create(request, day_id):
     if selected_contractor:
         selected_contractor_obj = Contractor.objects.filter(id=selected_contractor).first()
 
+    paginator = Paginator(services, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    query_params = request.GET.copy()
+    if 'page' in query_params:
+        query_params.pop('page')
+
+    pagination_slots = build_pagination_slots(page_obj)
+
     return render(request, 'core/estimate_item_form.html', {
         'estimate': estimate,
         'day': day,
-        'services': services,
+        'services': page_obj,
+        'page_obj': page_obj,
+        'pagination_slots': pagination_slots,
+        'query_params': query_params.urlencode(),
         'query': query,
         'categories': categories,
         'selected_category': selected_category,
@@ -431,7 +485,6 @@ def estimate_item_create(request, day_id):
         'selected_contractor_obj': selected_contractor_obj,
         'current_full_path': request.get_full_path(),
     })
-
 
 @login_required
 def estimate_item_create_for_service(request, day_id, service_id):
@@ -818,9 +871,9 @@ def service_create_for_contractor(request, contractor_id):
                 f'Услуга "{service.name}" добавлена для поставщика "{contractor.name}".'
             )
 
-            detail_url = reverse('contractor_detail', args=[contractor.id])
             if next_url:
-                return redirect(f'{detail_url}?{urlencode({"next": next_url})}')
+                return redirect(next_url)
+
             return redirect('contractor_detail', contractor_id=contractor.id)
     else:
         form = ServiceForContractorCreateForm()

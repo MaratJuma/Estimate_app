@@ -63,22 +63,30 @@
                 {% if selected_contractor %} поставщик выбран {% endif %}
             </p>
         {% endif %}
+
+        {% if page_obj %}
+            <p class="muted">
+                Найдено услуг: {{ page_obj.paginator.count }}.
+                Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}.
+            </p>
+        {% endif %}
     </div>
 
     {% if services %}
+        <!-- {% include 'core/includes/pagination.html' %} -->
+
         <div class="table-wrapper">
             <table class="estimate-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Название услуги</th>
-                        <!-- <th>Поставщик</th> -->
-                        <th>Себестоимость</th>
-                        <th>Цена клиенту</th>
-                        <th>Комментарий</th>
-                        <th>Медиа</th>
-                        <th>Активна</th>
-                        <th>Добавить</th>
+                        <th style="width: 20px;">ID</th>
+                        <th style="width: 150px;">Название услуги</th>
+                        <th style="width: 80px;">Себестоимость</th>
+                        <th style="width: 80px;">Цена клиенту</th>
+                        <th style="width: 350px;">Комментарий</th>
+                        <th style="width: 50px;">Медиа</th>
+                        <th style="width: 35px;">Активна</th>
+                        <th style="width: 70px;">Добавить</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -90,15 +98,10 @@
                                     {{ service.name }}
                                 </a>
                             </td>
-                            <!-- <td>
-                                <a href="{% url 'contractor_detail' service.contractor.id %}">
-                                    {{ service.contractor.name }}
-                                </a>
-                            </td> -->
                             <td>{{ service.cost_price|floatformat:2 }}</td>
                             <td>{{ service.client_price|floatformat:2 }}</td>
                             <td style="min-width: 280px; max-width: 420px; white-space: normal; line-height: 1.4;">
-                                {{ service.description|default:"—"|linebreaksbr }}
+                                {{ service.description|default:"—"|truncatechars:200 }}
                             </td>
                             <td>
                                 {% if service.image_url %}
@@ -118,6 +121,8 @@
                 </tbody>
             </table>
         </div>
+
+        {% include 'core/includes/pagination.html' %}
     {% else %}
         <p>Подходящие услуги не найдены.</p>
     {% endif %}

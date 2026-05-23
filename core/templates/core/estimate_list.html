@@ -33,24 +33,33 @@
         {% if query %}
             <p class="muted">Результаты поиска по запросу: "{{ query }}"</p>
         {% endif %}
+
+        {% if page_obj %}
+            <p class="muted">
+                Найдено смет: {{ page_obj.paginator.count }}.
+                Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}.
+            </p>
+        {% endif %}
     </div>
 
     {% if estimates %}
+        <!-- {% include 'core/includes/pagination.html' %} -->
+
         <div class="table-wrapper">
             <table class="estimate-table">
                 <thead>
                     <tr>
-                        <th>№</th>
-                        <th>Статус</th>
-                        <th>Клиент</th>
-                        <th>Менеджер</th>
-                        <th>Комментарий</th>
-                        <th>Дней</th>
-                        <th>Себестоимость</th>
-                        <th>Клиенту</th>
-                        <th>Маржа</th>
-                        <th>Создана</th>
-                        <th>Действия</th>
+                        <th style="width: 30px;">№</th>
+                        <th style="width: 110px;">Статус</th>
+                        <th style="width: 140px;">Клиент</th>
+                        <th style="width: 70px;">Менеджер</th>
+                        <th style="width: 220px;">Комментарий</th>
+                        <th style="width: 30px;">Дней</th>
+                        <th style="width: 90px;">Себестоимость</th>
+                        <th style="width: 90px;">Клиенту</th>
+                        <th style="width: 90px;">Маржа</th>
+                        <th style="width: 110px;">Создана</th>
+                        <th style="width: 90px;">Открыть</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -72,15 +81,15 @@
                             <td>{{ estimate.client_name }}</td>
                             <td>{{ estimate.manager_name }}</td>
                             <td>{{ estimate.comment|default:"—"|truncatechars:40 }}</td>
-                            <td>{{ estimate.days_count }}</td>
+                            <td>{{ estimate.days_count_value }}</td>
                             <td>{{ estimate.total_cost_sum|floatformat:2 }}</td>
                             <td>{{ estimate.total_client_sum|floatformat:2 }}</td>
                             <td>{{ estimate.margin_sum|floatformat:2 }}</td>
                             <td>{{ estimate.created_at|date:"d.m.Y H:i" }}</td>
                             <td>
-                                <a href="{% url 'estimate_detail' estimate.id %}">Открыть</a>
+                                <a class="button-link" href="{% url 'estimate_detail' estimate.id %}">Открыть</a>
 
-                                {% if can_edit_estimates_ui and not estimate.is_approved %}
+                                <!-- {% if can_edit_estimates_ui and not estimate.is_approved %}
                                     | <a href="{% url 'estimate_update' estimate.id %}">Ред.</a>
                                 {% endif %}
 
@@ -90,13 +99,15 @@
 
                                 {% if can_approve_estimates_ui and not estimate.is_approved %}
                                     | <a href="{% url 'estimate_approve' estimate.id %}">Утвердить</a>
-                                {% endif %}
+                                {% endif %} -->
                             </td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+
+        {% include 'core/includes/pagination.html' %}
     {% else %}
         <p>Смет пока нет.</p>
     {% endif %}
