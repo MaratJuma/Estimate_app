@@ -914,12 +914,12 @@ def estimate_print(request, estimate_id):
         days.append(day)
 
     company = {
-        'name': 'SakhTravel',
+        'name': 'SAKHTRAVEL',
         'tagline': 'Объединяя мечты',
-        'phone': '<<IDS_0002>>',
-        'email': '<<IDS_0003>>',
-        'site': 'www.sakhtravel.ru',
-        'address': '<<LOC_0001>>, <<LOC_0002>>',
+        'phone': '+7 (934) 477-30-08',
+        'email': 'go@sakhtravel.com',
+        'site': 'www.sakhtravel.com',
+        'address': 'г. Южно-Сахалинск, Есенина 1 (ТЦ ГРАНД, цокольный этаж)',
         'manager_title': 'Менеджер проекта',
         'manager_name': estimate.manager_name,
     }
