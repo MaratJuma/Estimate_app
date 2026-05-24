@@ -5,6 +5,11 @@ class EstimateForm(forms.ModelForm):
     class Meta:
         model = Estimate
         fields = ['client_name', 'manager_name', 'comment']
+        labels = {
+            'client_name': 'Клиент',
+            'manager_name': 'Менеджер',
+            'comment': 'Комментарий',
+        }
 
 
 class EstimateItemCreateForm(forms.ModelForm):
