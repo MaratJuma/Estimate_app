@@ -4,14 +4,16 @@
 
 {% block content %}
     <h2>Главная</h2>
-    <p>Проект запущен и работает.</p>
+    <p>Система смет работает в режиме бета тестирования. Пожалуйста, сообщайте о багах и предлагайте улучшения разработчикам.</p>
 
     <div class="top-space">
         <div class="button-container">
             <a class="button-link" href="{% url 'contractor_list' %}">Поставщики</a>
             <a class="button-link" href="{% url 'service_list' %}">Услуги</a>
             <a class="button-link" href="{% url 'estimate_list' %}">Сметы</a>
-            <a class="button-link" href="{% url 'estimate_create' %}">Создать смету</a>
+            {% if can_edit_estimates_ui %}
+                <a class="button-link" href="{% url 'estimate_create' %}">Создать смету</a>
+            {% endif %}
         </div>
     </div>
 {% endblock %}
