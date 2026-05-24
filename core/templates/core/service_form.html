@@ -63,7 +63,7 @@
                 <p class="top-space">
                     <button type="submit">Найти</button>
                     <a class="button-reset" href="{% url 'service_create' %}">Сбросить</a>
-                    <a class="button-reset" href="{% url 'contractor_create' %}?next={% url 'service_create' %}">Добавить поставщика</a>
+                    <a class="button-reset" href="{% url 'contractor_create' %}?next={{ current_full_path|urlencode }}">Добавить поставщика</a>
                 </p>
             </form>
 
@@ -128,10 +128,11 @@
     <p>
         {% if next_url %}
             <a class="button-link" href="{{ next_url }}">Назад</a>
-        {% elif is_contractor_context %}
-            <a class="button-link" href="{% url 'contractor_detail' contractor.id %}">Назад</a>
+        <!-- {% elif is_contractor_context %}
+            <a class="button-link" href="{% url 'contractor_detail' contractor.id %}">Назад</a> -->
         {% else %}
             <a class="button-link" href="{% url 'service_list' %}">Список услуг</a>
         {% endif %}
     </p>
 {% endblock %}
+

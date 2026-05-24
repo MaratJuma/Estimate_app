@@ -145,6 +145,7 @@ def service_update(request, service_id):
         'is_edit': True,
         'service': service,
         'next_url': next_url,
+        'current_full_path': request.get_full_path(),
     })
 
 @login_required
@@ -232,7 +233,7 @@ def contractor_update(request, contractor_id):
         return deny_access(request, 'У вас нет прав на управление поставщиками.')
     
     contractor = get_object_or_404(Contractor, id=contractor_id)
-    next_url = request.GET.get('next') or request.POST.get('next')
+    next_url = (request.GET.get('next') or request.POST.get('next') or '').strip()
 
     if request.method == 'POST':
         form = ContractorForm(request.POST, instance=contractor)
@@ -781,27 +782,32 @@ def estimate_duplicate(request, estimate_id):
         'estimate': source_estimate,
     })
 
-@login_required
 def contractor_create(request):
-
     if not can_manage_contractors(request.user):
         return deny_access(request, 'У вас нет прав на управление поставщиками.')
-    
-    # next_url = request.GET.get('next') or request.POST.get('next')
+
+    next_url = (request.GET.get('next') or request.POST.get('next') or '').strip()
 
     if request.method == 'POST':
         form = ContractorForm(request.POST)
         if form.is_valid():
             contractor = form.save()
-            messages.success(request, f'Поставщик "{contractor.name}" создан.')
-            return redirect('contractor_list')
+            messages.success(request, f'Поставщик "{contractor.name}" добавлен.')
+
+            detail_url = reverse('contractor_detail', args=[contractor.id])
+
+            if next_url:
+                return redirect(f'{detail_url}?{urlencode({"next": next_url})}')
+
+            return redirect('contractor_detail', contractor_id=contractor.id)
     else:
         form = ContractorForm()
 
     return render(request, 'core/contractor_form.html', {
         'form': form,
-        # 'next_url': next_url,
         'is_edit': False,
+        'next_url': next_url,
+        'current_full_path': request.get_full_path(),
     })
 
 
@@ -819,6 +825,7 @@ def service_create(request):
         selected_category = request.GET.get('category', '').strip()
 
     contractors = Contractor.objects.all().order_by('name')
+    next_url = request.GET.get('next') or request.POST.get('next')
 
     if query:
         contractors = contractors.filter(name__icontains=query)
@@ -840,6 +847,10 @@ def service_create(request):
             form.save()
             messages.success(request, 'Услуга создана.')
             return redirect('service_list')
+        
+        if next_url:
+            return redirect(next_url)
+        
     else:
         form = ServiceCreateForm()
         form.fields['contractor'].queryset = contractors
@@ -850,6 +861,8 @@ def service_create(request):
         'query': query,
         'categories': categories,
         'selected_category': selected_category,
+        'next_url': next_url,
+        'current_full_path': request.get_full_path(),
     })
 
 @login_required
