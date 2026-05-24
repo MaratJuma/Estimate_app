@@ -2,7 +2,6 @@ from django.db import models
 
 class Contractor(models.Model):
     name = models.CharField(max_length=255)
-    category = models.CharField(max_length=100)
     contact_name = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=50, blank=True)
     email = models.EmailField(blank=True)
@@ -19,6 +18,7 @@ class Service(models.Model):
         related_name='services'
     )
     name = models.CharField(max_length=255)
+    category = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     cost_price = models.DecimalField(max_digits=12, decimal_places=2)
     client_price = models.DecimalField(max_digits=12, decimal_places=2)

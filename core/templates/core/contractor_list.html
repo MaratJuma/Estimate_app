@@ -69,9 +69,9 @@
                     <tr>
                         <th style="width: 20px;">ID</th>
                         <th style="width: 150px;">Поставщик</th>
-                        <th style="width: 100px;">Категория</th>
+                        <!-- <th style="width: 100px;">Категория</th> -->
                         <th style="width: 30px;">Услуг</th>
-                        <th style="width: 220px;">Комментарий</th>
+                        <th style="width: 250px;">Комментарий</th>
                         <th style="width: 150px;">Контактное лицо</th>
                         <th style="width: 100px;">Телефон</th>
                         <th style="width: 150px;">E-mail</th>
@@ -86,7 +86,7 @@
                                     {{ contractor.name }}
                                 </a>
                             </td>
-                            <td>{{ contractor.category|default:"—" }}</td>
+                            <!-- <td>{{ contractor.category|default:"—" }}</td> -->
                             <td>{{ contractor.services_count }}</td>
                             <td style="max-width: 320px; white-space: normal; line-height: 1.4;">
                                 {{ contractor.notes|default:"—"|truncatechars:200 }}

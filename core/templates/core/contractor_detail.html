@@ -7,18 +7,11 @@
     <h2>Поставщик: {{ contractor.name }}</h2>
 
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
-        <!-- {% if next_url %}
-            <a class="button-link" href="{{ next_url }}">Назад</a>
-        {% else %}
-            <a class="button-link" href="{% url 'contractor_list' %}">Список поставщиков</a>
-        {% endif %} -->
-
         {% if can_manage_contractors_ui %}
             <a class="button-link" href="{% url 'contractor_update' contractor.id %}?next={{ contractor_detail_return_url|urlencode }}">
                 Редактировать информацию о поставщике
             </a>
         {% endif %}
-
 
         {% if can_manage_services_ui %}
             <a class="button-link" href="{% url 'service_create_for_contractor' contractor.id %}?next={{ contractor_detail_return_url|urlencode }}">
@@ -29,14 +22,13 @@
 
     <div class="card" style="margin-bottom: 20px;">
         <p><strong>Название:</strong> {{ contractor.name }}</p>
-        <p><strong>Категория:</strong> {{ contractor.category|default:"—" }}</p>
         <p><strong>Контактное лицо:</strong> {{ contractor.contact_name|default:"—" }}</p>
         <p><strong>Телефон:</strong> {{ contractor.phone|default:"—" }}</p>
         <p><strong>E-mail:</strong> {{ contractor.email|default:"—" }}</p>
         <p><strong>Комментарий:</strong><br>{{ contractor.notes|default:"—"|linebreaksbr }}</p>
     </div>
 
-   <h3>Услуги поставщика</h3>
+    <h3>Услуги поставщика</h3>
 
     {% if services %}
         <div class="table-wrapper">
@@ -45,6 +37,7 @@
                     <tr>
                         <th style="width: 20px;">ID</th>
                         <th style="width: 150px;">Название услуги</th>
+                        <th style="width: 100px;">Категория</th>
                         <th style="width: 90px;">Себестоимость</th>
                         <th style="width: 90px;">Цена клиенту</th>
                         <th style="width: 250px;">Комментарий</th>
@@ -67,6 +60,7 @@
                                     </a>
                                 {% endif %}
                             </td>
+                            <td>{{ service.category|default:"—" }}</td>
                             <td>{{ service.cost_price|floatformat:2 }}</td>
                             <td>{{ service.client_price|floatformat:2 }}</td>
                             <td style="min-width: 320px; max-width: 480px; white-space: normal; line-height: 1.4;">
@@ -88,11 +82,6 @@
     {% else %}
         <p>У этого поставщика пока нет услуг.</p>
     {% endif %}
-
-    <div>
-
-
-    </div>    
 
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; margin-top:16px;">
         {% if next_url %}

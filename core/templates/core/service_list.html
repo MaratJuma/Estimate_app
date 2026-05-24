@@ -70,7 +70,7 @@
                         <th style="width: 20px;">ID</th>
                         <th style="width: 140px;">Услуга</th>
                         <th style="width: 140px;">Поставщик</th>
-                        <!-- <th style="width: 100px;">Категория</th> -->
+                        <th style="width: 100px;">Категория</th>
                         <th style="width: 250px;">Комментарий</th>
                         <th style="width: 50px;">Медиа</th>
                         <th style="width: 80px;">Себестоимость</th>
@@ -102,7 +102,7 @@
                                 </a>
                             </td>
                             
-                            <!-- <td>{{ service.contractor.category|default:"—" }}</td> -->
+                            <td>{{ service.category|default:"—" }}</td>
                              <td style="min-width: 280px; max-width: 420px; white-space: normal; line-height: 1.4;">
                                 {{ service.description|default:"—"|truncatechars:200 }}
                             </td>

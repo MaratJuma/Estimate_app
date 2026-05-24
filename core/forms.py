@@ -70,10 +70,9 @@ class EstimateDayUpdateForm(forms.ModelForm):
 class ContractorForm(forms.ModelForm):
     class Meta:
         model = Contractor
-        fields = ['name', 'category', 'contact_name', 'phone', 'email', 'notes']
+        fields = ['name', 'contact_name', 'phone', 'email', 'notes']
         labels = {
             'name': 'Название поставщика',
-            'category': 'Категория',
             'contact_name': 'Контактное лицо',
             'phone': 'Телефон',
             'email': 'E-mail',
@@ -81,24 +80,20 @@ class ContractorForm(forms.ModelForm):
         }
 
 
-# class ServiceForm(forms.ModelForm):
-#     class Meta:
-#         model = Service
-#         fields = ['contractor', 'name', 'description', 'cost_price', 'client_price', 'is_active']
-#         labels = {
-#             'contractor': 'Поставщик',
-#             'name': 'Название услуги',
-#             'description': 'Описание',
-#             'cost_price': 'Себестоимость',
-#             'client_price': 'Цена для клиента',
-#             'is_active': 'Активна',
-#         } 
-
 
 class ServiceCreateForm(forms.ModelForm):
     class Meta:
         model = Service
-        fields = ['contractor', 'name', 'cost_price', 'client_price', 'description', 'is_active', 'image_url',]
+        fields = [
+            'contractor',
+            'name',
+            'category',
+            'cost_price',
+            'client_price',
+            'description',
+            'is_active',
+            'image_url',
+        ]
         widgets = {
             'image_url': forms.URLInput(attrs={
                 'placeholder': 'https://...',
@@ -107,6 +102,7 @@ class ServiceCreateForm(forms.ModelForm):
         labels = {
             'contractor': 'Поставщик',
             'name': 'Название услуги',
+            'category': 'Категория',
             'cost_price': 'Себестоимость',
             'client_price': 'Цена для клиента',
             'description': 'Комментарий',
@@ -118,13 +114,21 @@ class ServiceCreateForm(forms.ModelForm):
 class ServiceUpdateForm(forms.ModelForm):
     class Meta:
         model = Service
-        fields = ['cost_price', 'client_price', 'description', 'is_active', 'image_url',]
+        fields = [
+            'category',
+            'cost_price',
+            'client_price',
+            'description',
+            'is_active',
+            'image_url',
+        ]
         widgets = {
             'image_url': forms.URLInput(attrs={
                 'placeholder': 'https://...',
             }),
         }
         labels = {
+            'category': 'Категория',
             'cost_price': 'Себестоимость',
             'client_price': 'Цена для клиента',
             'description': 'Комментарий',
@@ -136,15 +140,15 @@ class ServiceUpdateForm(forms.ModelForm):
 class ServiceForContractorCreateForm(forms.ModelForm):
     class Meta:
         model = Service
-        fields = ['name', 'cost_price', 'client_price', 'description', 'is_active', 'image_url']
+        fields = ['name', 'category', 'cost_price', 'client_price', 'description', 'is_active', 'image_url']
         widgets = {
             'image_url': forms.URLInput(attrs={
                 'placeholder': 'https://...',
             }),
-            
         }
         labels = {
             'name': 'Название услуги',
+            'category': 'Категория',
             'cost_price': 'Себестоимость',
             'client_price': 'Цена для клиента',
             'description': 'Комментарий',

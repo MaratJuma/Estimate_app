@@ -81,9 +81,10 @@
                     <tr>
                         <th style="width: 20px;">ID</th>
                         <th style="width: 150px;">Название услуги</th>
+                        <th style="width: 100px;">Категория</th>
                         <th style="width: 80px;">Себестоимость</th>
                         <th style="width: 80px;">Цена клиенту</th>
-                        <th style="width: 350px;">Комментарий</th>
+                        <th style="width: 300px;">Комментарий</th>
                         <th style="width: 50px;">Медиа</th>
                         <th style="width: 35px;">Активна</th>
                         <th style="width: 70px;">Добавить</th>
@@ -98,6 +99,7 @@
                                     {{ service.name }}
                                 </a>
                             </td>
+                            <td>{{ service.category|default:"—" }}</td>
                             <td>{{ service.cost_price|floatformat:2 }}</td>
                             <td>{{ service.client_price|floatformat:2 }}</td>
                             <td style="min-width: 280px; max-width: 420px; white-space: normal; line-height: 1.4;">

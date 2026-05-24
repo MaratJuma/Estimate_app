@@ -8,7 +8,8 @@
 
     <div class="card">
         <p><strong>Название услуги:</strong> {{ service.name }}</p>
-        <p><strong>Поставщик:</strong> {{ service.contractor.name }}</p>
+        <p><strong>Категория:</strong> {{ service.category|default:"—" }}</p>
+        <!-- <p><strong>Поставщик:</strong> {{ service.contractor.name }}</p> -->
         <p><strong>Себестоимость:</strong> {{ service.cost_price|money }}</p>
         <p><strong>Цена для клиента:</strong> {{ service.client_price|money }}</p>
         <p><strong>Комментарий по услуге:</strong> {{ service.description|default:"—" }}</p>
@@ -25,7 +26,6 @@
     <div class="card">
         <h3>Информация о поставщике</h3>
         <p><strong>Название:</strong> {{ service.contractor.name }}</p>
-        <p><strong>Категория:</strong> {{ service.contractor.category|default:"—" }}</p>
         <p><strong>Контактное лицо:</strong> {{ service.contractor.contact_name|default:"—" }}</p>
         <p><strong>Телефон:</strong> {{ service.contractor.phone|default:"—" }}</p>
         <p><strong>E-mail:</strong> {{ service.contractor.email|default:"—" }}</p>

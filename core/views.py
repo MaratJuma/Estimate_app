@@ -58,10 +58,10 @@ def service_list(request):
         services = services.filter(name__icontains=query)
 
     if selected_category:
-        services = services.filter(contractor__category=selected_category)
+        services = services.filter(category=selected_category)
 
     categories = (
-        Contractor.objects.exclude(category__isnull=True)
+        Service.objects.exclude(category__isnull=True)
         .exclude(category__exact='')
         .values_list('category', flat=True)
         .distinct()
@@ -187,7 +187,7 @@ def contractor_list(request):
 
     contractors = (
         Contractor.objects
-        .annotate(services_count=Count('services'))
+        .annotate(services_count=Count('services', distinct=True))
         .order_by('-id')
     )
 
@@ -195,10 +195,10 @@ def contractor_list(request):
         contractors = contractors.filter(name__icontains=query)
 
     if selected_category:
-        contractors = contractors.filter(category=selected_category)
+        contractors = contractors.filter(services__category=selected_category).distinct()
 
     categories = (
-        Contractor.objects.exclude(category__isnull=True)
+        Service.objects.exclude(category__isnull=True)
         .exclude(category__exact='')
         .values_list('category', flat=True)
         .distinct()
@@ -424,7 +424,7 @@ def estimate_item_create(request, day_id):
         services = services.filter(name__icontains=query)
 
     if selected_category:
-        services = services.filter(contractor__category=selected_category)
+        services = services.filter(category=selected_category)
 
     if selected_contractor:
         services = services.filter(contractor_id=selected_contractor)
@@ -441,10 +441,10 @@ def estimate_item_create(request, day_id):
 
     categories = (
         categories_qs
-        .exclude(contractor__category='')
-        .values_list('contractor__category', flat=True)
+        .exclude(category='')
+        .values_list('category', flat=True)
         .distinct()
-        .order_by('contractor__category')
+        .order_by('category')
     )
 
     contractors_qs = base_services
@@ -453,7 +453,7 @@ def estimate_item_create(request, day_id):
         contractors_qs = contractors_qs.filter(name__icontains=query)
 
     if selected_category:
-        contractors_qs = contractors_qs.filter(contractor__category=selected_category)
+        contractors_qs = contractors_qs.filter(category=selected_category)
 
     contractor_ids = contractors_qs.values_list('contractor_id', flat=True).distinct()
 
@@ -830,11 +830,11 @@ def service_create(request):
     if query:
         contractors = contractors.filter(name__icontains=query)
 
-    if selected_category:
-        contractors = contractors.filter(category=selected_category)
+    # if selected_category:
+    #     contractors = contractors.filter(category=selected_category)
 
     categories = (
-        Contractor.objects.values_list('category', flat=True)
+        Service.objects.values_list('category', flat=True)
         .distinct()
         .order_by('category')
     )

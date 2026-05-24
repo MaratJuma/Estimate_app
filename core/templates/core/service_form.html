@@ -23,7 +23,7 @@
     {% if is_contractor_context %}
         <div class="card" style="margin-bottom: 20px;">
             <p><strong>Поставщик:</strong> {{ contractor.name }}</p>
-            <p><strong>Категория:</strong> {{ contractor.category|default:"—" }}</p>
+            <!-- <p><strong>Категория:</strong> {{ contractor.category|default:"—" }}</p> -->
             <p><strong>Контактное лицо:</strong> {{ contractor.contact_name|default:"—" }}</p>
         </div>
     {% endif %}
@@ -48,7 +48,7 @@
                     >
                 </p>
 
-                <p>
+                <!-- <p>
                     <label for="id_category"><strong>Категория:</strong></label>
                     <select id="id_category" name="category">
                         <option value="">Все категории</option>
@@ -58,7 +58,7 @@
                             </option>
                         {% endfor %}
                     </select>
-                </p>
+                </p> -->
 
                 <p class="top-space">
                     <button type="submit">Найти</button>
