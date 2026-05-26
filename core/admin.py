@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Contractor, Service, Estimate, EstimateDay, EstimateItem
+from .models import Contractor, Service, Estimate, EstimateDay, EstimateItem, ServiceCategory
 
 
 @admin.register(Contractor)
@@ -10,10 +10,15 @@ class ContractorAdmin(admin.ModelAdmin):
 
 @admin.register(Service)
 class ServiceAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'contractor', 'category', 'cost_price', 'client_price', 'is_active')
+    list_display = ('id', 'name', 'contractor', 'category','cost_price', 'client_price', 'is_active')
     list_filter = ('is_active', 'contractor', 'category')
     search_fields = ('name', 'description')
 
+
+@admin.register(ServiceCategory)
+class ServiceCategoryAdmin(admin.ModelAdmin):
+
+    list_display = ('id', 'name')
 
 @admin.register(Estimate)
 class EstimateAdmin(admin.ModelAdmin):

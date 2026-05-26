@@ -8,7 +8,7 @@
 
     <div class="card">
         <p><strong>Название услуги:</strong> {{ service.name }}</p>
-        <p><strong>Категория:</strong> {{ service.category|default:"—" }}</p>
+        <p><strong>Категория:</strong> {{ service.category.name|default:"—" }}</p>
         <!-- <p><strong>Поставщик:</strong> {{ service.contractor.name }}</p> -->
         <p><strong>Себестоимость:</strong> {{ service.cost_price|money }}</p>
         <p><strong>Цена для клиента:</strong> {{ service.client_price|money }}</p>

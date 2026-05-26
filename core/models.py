@@ -9,6 +9,19 @@ class Contractor(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+class ServiceCategory(models.Model):
+    name = models.CharField("Название", max_length=100, unique=True)
+    sort_order = models.PositiveIntegerField('Порядок сортировки', default=0)
+
+    class Meta:
+        verbose_name = "Категория услуги"
+        verbose_name_plural = "Категории услуг"
+        ordering = ['sort_order', 'name']
+
+    def __str__(self):
+        return self.name
 
 
 class Service(models.Model):
@@ -18,7 +31,15 @@ class Service(models.Model):
         related_name='services'
     )
     name = models.CharField(max_length=255)
-    category = models.CharField(max_length=100)
+
+    category = models.ForeignKey(
+        'ServiceCategory',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='services',
+        verbose_name='Категория (справочник)',
+    )
     description = models.TextField(blank=True)
     cost_price = models.DecimalField(max_digits=12, decimal_places=2)
     client_price = models.DecimalField(max_digits=12, decimal_places=2)

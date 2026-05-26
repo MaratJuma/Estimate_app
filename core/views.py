@@ -24,7 +24,7 @@ from .permissions import (
         is_production_manager,
         is_sales_manager,
 )
-from .models import Service, Estimate, EstimateDay, EstimateItem, Contractor
+from .models import Service, Estimate, EstimateDay, EstimateItem, Contractor, ServiceCategory
 from .forms import (
         EstimateForm, 
         EstimateItemQtyForm, 
@@ -58,19 +58,17 @@ def service_list(request):
         services = services.filter(name__icontains=query)
 
     if selected_category:
-        services = services.filter(category=selected_category)
+        services = services.filter(category_id=selected_category)
 
-    categories = (
-        Service.objects.exclude(category__isnull=True)
-        .exclude(category__exact='')
-        .values_list('category', flat=True)
-        .distinct()
-        .order_by('category')
-    )
+    categories = ServiceCategory.objects.order_by('sort_order', 'name')
 
     paginator = Paginator(services, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
+    selected_category_obj = None
+    if selected_category:
+        selected_category_obj = ServiceCategory.objects.filter(id=selected_category).first()
 
     query_params = request.GET.copy()
     if 'page' in query_params:
@@ -85,6 +83,8 @@ def service_list(request):
         'query': query,
         'categories': categories,
         'selected_category': selected_category,
+        'selected_category_obj': selected_category_obj,
+        'selected_category_name': selected_category_obj.name if selected_category_obj else '',
         'query_params': query_params.urlencode(),
         'current_full_path': request.get_full_path(),
     })
@@ -185,6 +185,10 @@ def contractor_list(request):
     query = request.GET.get('q', '').strip()
     selected_category = request.GET.get('category', '').strip()
 
+    selected_category_obj = None
+    if selected_category:
+        selected_category_obj = ServiceCategory.objects.filter(id=selected_category).first()
+
     contractors = (
         Contractor.objects
         .annotate(services_count=Count('services', distinct=True))
@@ -195,15 +199,9 @@ def contractor_list(request):
         contractors = contractors.filter(name__icontains=query)
 
     if selected_category:
-        contractors = contractors.filter(services__category=selected_category).distinct()
+        contractors = contractors.filter(services__category_id=selected_category).distinct()
 
-    categories = (
-        Service.objects.exclude(category__isnull=True)
-        .exclude(category__exact='')
-        .values_list('category', flat=True)
-        .distinct()
-        .order_by('category')
-    )
+    categories = ServiceCategory.objects.order_by('sort_order', 'name')
 
     paginator = Paginator(contractors, 15)  # 15 поставщиков на страницу
     page_number = request.GET.get('page')
@@ -222,6 +220,8 @@ def contractor_list(request):
         'query': query,
         'categories': categories,
         'selected_category': selected_category,
+        'selected_category_obj': selected_category_obj,
+        'selected_category_name': selected_category_obj.name if selected_category_obj else '',
         'current_full_path': request.get_full_path(),
         'query_params': query_params.urlencode(),
     })
@@ -416,6 +416,10 @@ def estimate_item_create(request, day_id):
     selected_category = request.GET.get('category', '').strip()
     selected_contractor = request.GET.get('contractor', '').strip()
 
+    selected_category_obj = None
+    if selected_category:
+        selected_category_obj = ServiceCategory.objects.filter(id=selected_category).first()
+
     base_services = Service.objects.select_related('contractor').filter(is_active=True)
 
     services = base_services
@@ -424,7 +428,7 @@ def estimate_item_create(request, day_id):
         services = services.filter(name__icontains=query)
 
     if selected_category:
-        services = services.filter(category=selected_category)
+        services = services.filter(category__id=selected_category)
 
     if selected_contractor:
         services = services.filter(contractor_id=selected_contractor)
@@ -439,13 +443,7 @@ def estimate_item_create(request, day_id):
     if selected_contractor:
         categories_qs = categories_qs.filter(contractor_id=selected_contractor)
 
-    categories = (
-        categories_qs
-        .exclude(category='')
-        .values_list('category', flat=True)
-        .distinct()
-        .order_by('category')
-    )
+    categories = ServiceCategory.objects.order_by('sort_order', 'name')
 
     contractors_qs = base_services
 
@@ -453,7 +451,7 @@ def estimate_item_create(request, day_id):
         contractors_qs = contractors_qs.filter(name__icontains=query)
 
     if selected_category:
-        contractors_qs = contractors_qs.filter(category=selected_category)
+        contractors_qs = contractors_qs.filter(category_id=selected_category)
 
     contractor_ids = contractors_qs.values_list('contractor_id', flat=True).distinct()
 
@@ -483,6 +481,8 @@ def estimate_item_create(request, day_id):
         'query': query,
         'categories': categories,
         'selected_category': selected_category,
+        'selected_category_obj': selected_category_obj,
+        'selected_category_name': selected_category_obj.name if selected_category_obj else '',
         'contractors': contractors,
         'selected_contractor': selected_contractor,
         'selected_contractor_obj': selected_contractor_obj,
@@ -830,14 +830,8 @@ def service_create(request):
     if query:
         contractors = contractors.filter(name__icontains=query)
 
-    # if selected_category:
-    #     contractors = contractors.filter(category=selected_category)
 
-    categories = (
-        Service.objects.values_list('category', flat=True)
-        .distinct()
-        .order_by('category')
-    )
+    categories = ServiceCategory.objects.order_by('sort_order', 'name')
 
     if request.method == 'POST':
         form = ServiceCreateForm(request.POST)

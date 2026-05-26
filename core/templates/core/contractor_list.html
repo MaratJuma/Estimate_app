@@ -31,8 +31,8 @@
                 <select id="id_category" name="category">
                     <option value="">Все категории</option>
                     {% for category in categories %}
-                        <option value="{{ category }}" {% if category == selected_category %}selected{% endif %}>
-                            {{ category }}
+                        <option value="{{ category.id }}" {% if category.id|stringformat:"s" == selected_category %}selected{% endif %}>
+                            {{ category.name }}
                         </option>
                     {% endfor %}
                 </select>
@@ -48,7 +48,7 @@
             <p class="muted">
                 Применён фильтр:
                 {% if query %} запрос "{{ query }}" {% endif %}
-                {% if selected_category %} категория "{{ selected_category }}" {% endif %}
+                {% if selected_category_name %} категория "{{ selected_category_name }}" {% endif %}
             </p>
         {% endif %}
 
@@ -69,7 +69,6 @@
                     <tr>
                         <th style="width: 20px;">ID</th>
                         <th style="width: 150px;">Поставщик</th>
-                        <!-- <th style="width: 100px;">Категория</th> -->
                         <th style="width: 30px;">Услуг</th>
                         <th style="width: 250px;">Комментарий</th>
                         <th style="width: 150px;">Контактное лицо</th>
@@ -86,7 +85,6 @@
                                     {{ contractor.name }}
                                 </a>
                             </td>
-                            <!-- <td>{{ contractor.category|default:"—" }}</td> -->
                             <td>{{ contractor.services_count }}</td>
                             <td style="max-width: 320px; white-space: normal; line-height: 1.4;">
                                 {{ contractor.notes|default:"—"|truncatechars:200 }}
