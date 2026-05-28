@@ -1,0 +1,47 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Удаление пользователя{% endblock %}
+
+{% block content %}
+    <h2>Удаление пользователя</h2>
+
+    <div class="card">
+        <p><strong>ID:</strong> {{ target_user.id }}</p>
+        <p><strong>Логин:</strong> {{ target_user.username }}</p>
+        <p><strong>Имя:</strong> {{ target_user.first_name }} {{ target_user.last_name }}</p>
+        <p>
+            <strong>Роль:</strong>
+            {% if current_role == 'admin' %}
+                Администратор
+            {% elif current_role == 'production_manager' %}
+                Отдел производства
+            {% elif current_role == 'sales_manager' %}
+                Отдел продаж
+            {% else %}
+                —
+            {% endif %}
+        </p>
+        <p><strong>Активен:</strong> {% if target_user.is_active %}Да{% else %}Нет{% endif %}</p>
+    </div>
+
+    {% if is_self_delete %}
+        <div class="card">
+            <p>Нельзя удалить собственного пользователя.</p>
+        </div>
+        <p>
+            <a class="button-link" href="{% url 'admin_user_list' %}">Назад к списку пользователей</a>
+        </p>
+    {% else %}
+        <div class="card">
+            <form method="post">
+                {% csrf_token %}
+                <p>Вы уверены, что хотите удалить этого пользователя?</p>
+
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button type="submit">Да, удалить</button>
+                    <a class="button-link" href="{% url 'admin_user_list' %}">Отмена</a>
+                </div>
+            </form>
+        </div>
+    {% endif %}
+{% endblock %}

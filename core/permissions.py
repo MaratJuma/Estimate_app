@@ -56,7 +56,7 @@ def can_edit_estimate(user, estimate):
 
 
 def can_duplicate_estimate(user, estimate):
-    return is_admin(user) or is_estimate_owner(user, estimate)
+    return can_edit_estimates(user)
 
 
 def can_delete_estimate(user, estimate):

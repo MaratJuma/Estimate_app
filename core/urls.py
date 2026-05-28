@@ -40,6 +40,12 @@ from .views import (
     admin_category_create,
     admin_category_update,
     admin_category_delete,
+
+    admin_user_list,
+    admin_user_create,
+    admin_user_update,
+    admin_user_delete,
+    admin_import_database,
     
     )
 
@@ -85,5 +91,11 @@ urlpatterns = [
     path('management/categories/', admin_category_list, name='admin_category_list'),
     path('management/categories/create/', admin_category_create, name='admin_category_create'),
     path('management/categories/<int:category_id>/edit/', admin_category_update, name='admin_category_update'),
-    path('management/categories/<int:category_id>/delete/', admin_category_delete, name='admin_category_delete'),    
+    path('management/categories/<int:category_id>/delete/', admin_category_delete, name='admin_category_delete'),   
+
+    path('management/users/', admin_user_list, name='admin_user_list'),
+    path('management/users/create/', admin_user_create, name='admin_user_create'),
+    path('management/users/<int:user_id>/edit/', admin_user_update, name='admin_user_update'),
+    path('management/users/<int:user_id>/delete/', admin_user_delete, name='admin_user_delete'), 
+    path('management/import/', admin_import_database, name='admin_import_database'),
 ]

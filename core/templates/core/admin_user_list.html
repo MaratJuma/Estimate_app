@@ -1,0 +1,60 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Пользователи{% endblock %}
+
+{% block content %}
+    <h2>Пользователи</h2>
+
+    <div class="action-bar">
+        <a class="button-link" href="{% url 'admin_user_create' %}">Добавить пользователя</a>
+        <a class="button-link" href="{% url 'admin_dashboard' %}">Назад в администрирование</a>
+    </div>
+
+    {% if user_rows %}
+        <div class="table-wrapper">
+            <table class="estimate-table">
+                <thead>
+                    <tr>
+                        <th style="width: 180px;">Имя</th>
+                        <th style="width: 160px;">Логин</th>
+                        <th style="width: 120px;">Пароль</th>
+                        <th style="width: 180px;">Роль</th>
+                        <th style="width: 90px;">Активен</th>
+                        <th style="width: 180px;">Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in user_rows %}
+                        <tr>
+                            <td>{{ row.display_name }}</td>
+                            <td>{{ row.obj.username }}</td>
+                            <td>Установлен</td>
+                            <td>
+                                {% if row.role == 'admin' %}
+                                    Администратор
+                                {% elif row.role == 'production_manager' %}
+                                    Отдел производства
+                                {% elif row.role == 'sales_manager' %}
+                                    Отдел продаж
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.obj.is_active %}Да{% else %}Нет{% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'admin_user_update' row.obj.id %}">Редактировать</a>
+                                {% if row.can_delete %}
+                                    | <a href="{% url 'admin_user_delete' row.obj.id %}">Удалить</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>Пользователи не найдены.</p>
+    {% endif %}
+{% endblock %}

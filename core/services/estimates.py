@@ -36,14 +36,18 @@ def approve_estimate(estimate):
 
 
 def duplicate_estimate(source_estimate, *, user):
+    duplicator_name = get_display_manager_name(user)
+
+    copy_note = f'Копия сметы #{source_estimate.id}. Создана пользователем: {duplicator_name}'
+
     if source_estimate.comment:
-        new_comment = f"{source_estimate.comment} (копия сметы #{source_estimate.id})"
+        new_comment = f'{source_estimate.comment}\n\n[{copy_note}]'
     else:
-        new_comment = f"Копия сметы #{source_estimate.id}"
+        new_comment = copy_note
 
     new_estimate = Estimate.objects.create(
         client_name=source_estimate.client_name,
-        manager_name=get_display_manager_name(user),
+        manager_name=duplicator_name,
         created_by=user,
         comment=new_comment,
         is_approved=False,

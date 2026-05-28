@@ -1,5 +1,8 @@
 from decimal import Decimal
+
+from django.contrib.auth import get_user_model
 from django.test import TestCase
+
 from core.models import (
     Contractor,
     ServiceCategory,
@@ -12,6 +15,7 @@ from core.services.estimates import (
     create_estimate_with_first_day,
     approve_estimate,
     duplicate_estimate,
+    get_display_manager_name,
 )
 from core.services.estimate_days import (
     create_next_estimate_day,
@@ -22,9 +26,18 @@ from core.services.estimate_items import (
     update_estimate_item,
 )
 
+User = get_user_model()
+
 
 class EstimateServicesTestCase(TestCase):
     def setUp(self):
+        self.user = User.objects.create_user(
+            username='manager1',
+            password='pass12345',
+            first_name='Иван',
+            last_name='Петров',
+        )
+
         self.category = ServiceCategory.objects.create(
             name='Трансфер',
             sort_order=1,
@@ -50,8 +63,8 @@ class EstimateServicesTestCase(TestCase):
     def test_create_estimate_with_first_day_creates_day_one(self):
         estimate = create_estimate_with_first_day(
             client_name='ООО Ромашка',
-            manager_name='Менеджер 1',
             comment='Тестовая смета',
+            user=self.user,
         )
 
         self.assertEqual(Estimate.objects.count(), 1)
@@ -60,12 +73,14 @@ class EstimateServicesTestCase(TestCase):
         day = estimate.days.first()
         self.assertIsNotNone(day)
         self.assertEqual(day.day_number, 1)
+        self.assertEqual(estimate.created_by, self.user)
+        self.assertEqual(estimate.manager_name, get_display_manager_name(self.user))
 
     def test_create_next_estimate_day_uses_next_number(self):
         estimate = create_estimate_with_first_day(
             client_name='Клиент',
-            manager_name='Менеджер',
             comment='',
+            user=self.user,
         )
 
         day2 = create_next_estimate_day(
@@ -81,8 +96,8 @@ class EstimateServicesTestCase(TestCase):
     def test_delete_day_and_renumber_shifts_following_days(self):
         estimate = create_estimate_with_first_day(
             client_name='Клиент',
-            manager_name='Менеджер',
             comment='',
+            user=self.user,
         )
 
         day2 = create_next_estimate_day(estimate, title='День 2', description='')
@@ -99,8 +114,8 @@ class EstimateServicesTestCase(TestCase):
     def test_create_estimate_item_from_service_copies_prices_and_totals(self):
         estimate = create_estimate_with_first_day(
             client_name='Клиент',
-            manager_name='Менеджер',
             comment='',
+            user=self.user,
         )
         day = estimate.days.first()
 
@@ -118,8 +133,8 @@ class EstimateServicesTestCase(TestCase):
     def test_update_estimate_item_recalculates_totals(self):
         estimate = create_estimate_with_first_day(
             client_name='Клиент',
-            manager_name='Менеджер',
             comment='',
+            user=self.user,
         )
         day = estimate.days.first()
 
@@ -144,8 +159,8 @@ class EstimateServicesTestCase(TestCase):
     def test_approve_estimate_updates_item_costs_and_sets_approved_fields(self):
         estimate = create_estimate_with_first_day(
             client_name='Клиент',
-            manager_name='Менеджер',
             comment='',
+            user=self.user,
         )
         day = estimate.days.first()
 
@@ -170,11 +185,11 @@ class EstimateServicesTestCase(TestCase):
         self.assertEqual(item.total_cost, Decimal('200.00'))
         self.assertEqual(item.total_client, Decimal('300.00'))
 
-    def test_duplicate_estimate_creates_copy_with_actual_cost_prices(self):
+    def test_duplicate_estimate_creates_copy_with_actual_cost_prices_and_new_owner(self):
         source_estimate = create_estimate_with_first_day(
             client_name='Клиент',
-            manager_name='Менеджер',
             comment='Исходная смета',
+            user=self.user,
         )
         source_day = source_estimate.days.first()
 
@@ -191,12 +206,22 @@ class EstimateServicesTestCase(TestCase):
         self.service.cost_price = Decimal('120.00')
         self.service.save()
 
-        new_estimate = duplicate_estimate(source_estimate)
+        duplicator = User.objects.create_user(
+            username='manager2',
+            password='pass12345',
+            first_name='Петр',
+            last_name='Сидоров',
+        )
+
+        new_estimate = duplicate_estimate(source_estimate, user=duplicator)
 
         self.assertNotEqual(new_estimate.id, source_estimate.id)
         self.assertEqual(new_estimate.client_name, source_estimate.client_name)
         self.assertFalse(new_estimate.is_approved)
+        self.assertEqual(new_estimate.created_by, duplicator)
+        self.assertEqual(new_estimate.manager_name, get_display_manager_name(duplicator))
         self.assertIn(f'копия сметы #{source_estimate.id}', new_estimate.comment.lower())
+        self.assertIn(get_display_manager_name(duplicator), new_estimate.comment)
 
         new_day = new_estimate.days.first()
         new_item = new_day.items.first()

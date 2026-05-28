@@ -1,5 +1,6 @@
 from django import forms
 from .models import Estimate, EstimateItem, Contractor, Service, EstimateDay
+from django.contrib.auth import get_user_model
 
 class EstimateForm(forms.ModelForm):
     class Meta:
@@ -119,6 +120,7 @@ class ServiceUpdateForm(forms.ModelForm):
     class Meta:
         model = Service
         fields = [
+            'name',
             'category',
             'cost_price',
             'client_price',
@@ -132,6 +134,7 @@ class ServiceUpdateForm(forms.ModelForm):
             }),
         }
         labels = {
+            'name': 'Название услуги',
             'category': 'Категория',
             'cost_price': 'Себестоимость',
             'client_price': 'Цена для клиента',
@@ -183,3 +186,103 @@ class ServiceCategoryForm(forms.ModelForm):
             'name': 'Название категории',
             'sort_order': 'Порядок сортировки',
         }
+
+
+
+from .services.admin_users import ROLE_CHOICES, get_user_role
+
+User = get_user_model()
+
+
+class AdminUserCreateForm(forms.ModelForm):
+    role = forms.ChoiceField(
+        label='Роль',
+        choices=ROLE_CHOICES,
+    )
+    password1 = forms.CharField(
+        label='Пароль',
+        widget=forms.PasswordInput,
+    )
+    password2 = forms.CharField(
+        label='Повторите пароль',
+        widget=forms.PasswordInput,
+    )
+
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'is_active']
+        labels = {
+            'username': 'Логин',
+            'first_name': 'Имя',
+            'last_name': 'Фамилия',
+            'is_active': 'Активен',
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get('password1')
+        password2 = cleaned_data.get('password2')
+
+        if password1 and password2 and password1 != password2:
+            self.add_error('password2', 'Пароли не совпадают.')
+
+        return cleaned_data
+
+
+class AdminUserUpdateForm(forms.ModelForm):
+    role = forms.ChoiceField(
+        label='Роль',
+        choices=ROLE_CHOICES,
+    )
+    new_password1 = forms.CharField(
+        label='Новый пароль',
+        widget=forms.PasswordInput,
+        required=False,
+    )
+    new_password2 = forms.CharField(
+        label='Повторите новый пароль',
+        widget=forms.PasswordInput,
+        required=False,
+    )
+
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'is_active']
+        labels = {
+            'username': 'Логин',
+            'first_name': 'Имя',
+            'last_name': 'Фамилия',
+            'is_active': 'Активен',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields['role'].initial = get_user_role(self.instance)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        new_password1 = cleaned_data.get('new_password1')
+        new_password2 = cleaned_data.get('new_password2')
+
+        if new_password1 or new_password2:
+            if new_password1 != new_password2:
+                self.add_error('new_password2', 'Пароли не совпадают.')
+
+        return cleaned_data
+    
+
+
+class DatabaseImportForm(forms.Form):
+    file = forms.FileField(label='Excel-файл (.xlsx)')
+    dry_run = forms.BooleanField(
+        label='Только проверить и показать предпросмотр',
+        required=False,
+        initial=True,
+    )
+
+    def clean_file(self):
+        file = self.cleaned_data['file']
+        if not file.name.lower().endswith('.xlsx'):
+            raise forms.ValidationError('Поддерживаются только файлы формата .xlsx')
+        return file

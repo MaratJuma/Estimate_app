@@ -1,0 +1,170 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Импорт Excel{% endblock %}
+
+{% block content %}
+    <h2>Импорт Excel</h2>
+
+    <div class="action-bar">
+        <a class="button-link" href="{% url 'admin_dashboard' %}">Назад в администрирование</a>
+    </div>
+
+    <div class="card">
+        <h3>Требуемая структура таблицы</h3>
+        <p class="muted">
+            Загружайте файл формата <strong>.xlsx</strong>.
+        </p>
+
+        <p><strong>Ожидаемые столбцы в точном порядке:</strong></p>
+        <ol>
+            {% for header in expected_headers %}
+                <li>{{ header }}</li>
+            {% endfor %}
+        </ol>
+    </div>
+
+    <div class="card">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button type="submit">Запустить</button>
+            </div>
+        </form>
+    </div>
+
+    {% if import_result %}
+        <div class="card">
+            <h3>
+                {% if import_result.dry_run %}
+                    Результат проверки / предпросмотра
+                {% else %}
+                    Результат импорта
+                {% endif %}
+            </h3>
+
+            <table class="estimate-table">
+                <tbody>
+                    <tr>
+                        <td><strong>Режим</strong></td>
+                        <td>
+                            {% if import_result.dry_run %}
+                                Dry-run / только проверка
+                            {% else %}
+                                Импорт в базу
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Обработано строк</strong></td>
+                        <td>{{ import_result.rows_processed }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Пропущено пустых строк</strong></td>
+                        <td>{{ import_result.rows_skipped }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Категорий создано</strong></td>
+                        <td>{{ import_result.categories_created }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Категорий найдено</strong></td>
+                        <td>{{ import_result.categories_found }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Подрядчиков создано</strong></td>
+                        <td>{{ import_result.contractors_created }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Подрядчиков обновлено</strong></td>
+                        <td>{{ import_result.contractors_updated }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Подрядчиков без изменений</strong></td>
+                        <td>{{ import_result.contractors_found }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Услуг создано</strong></td>
+                        <td>{{ import_result.services_created }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Услуг обновлено</strong></td>
+                        <td>{{ import_result.services_updated }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ошибок</strong></td>
+                        <td>{{ import_result.errors|length }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        {% if import_result.preview_rows %}
+            <div class="card">
+                <h3>Предпросмотр действий</h3>
+                <p class="muted">
+                    Показаны первые {{ import_result.preview_rows|length }} строк(и).
+                </p>
+
+                <div class="table-wrapper">
+                    <table class="estimate-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 80px;">Строка</th>
+                                <th>Категория</th>
+                                <th>Подрядчик</th>
+                                <th>Услуга</th>
+                                <th style="width: 110px;">Себестоимость</th>
+                                <th style="width: 110px;">Клиенту</th>
+                                <th style="width: 120px;">Категория</th>
+                                <th style="width: 120px;">Подрядчик</th>
+                                <th style="width: 120px;">Услуга</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in import_result.preview_rows %}
+                                <tr>
+                                    <td>{{ row.row_number }}</td>
+                                    <td>{{ row.category_name }}</td>
+                                    <td>{{ row.contractor_name }}</td>
+                                    <td>{{ row.service_name }}</td>
+                                    <td>{{ row.cost_price }}</td>
+                                    <td>{{ row.client_price }}</td>
+                                    <td>{{ row.category_action }}</td>
+                                    <td>{{ row.contractor_action }}</td>
+                                    <td>{{ row.service_action }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if import_result.errors %}
+            <div class="card">
+                <h3>Ошибки</h3>
+
+                <div class="table-wrapper">
+                    <table class="estimate-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 120px;">Строка</th>
+                                <th>Ошибка</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for error in import_result.errors %}
+                                <tr>
+                                    <td>{{ error.row }}</td>
+                                    <td>{{ error.message }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+{% endblock %}

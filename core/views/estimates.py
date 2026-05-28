@@ -36,7 +36,7 @@ def estimate_list(request):
 
     estimates = get_estimate_list_queryset(query=query)
 
-    paginator = Paginator(estimates, 15)
+    paginator = Paginator(estimates, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -147,16 +147,17 @@ def estimate_duplicate(request, estimate_id):
     )
 
     if not can_duplicate_estimate(request.user, source_estimate):
-        return deny_access(request, 'У вас нет прав на дублирование этой сметы.')
+        return deny_access(request, 'У вас нет прав на дублирование смет.')
 
     if request.method == 'POST':
         new_estimate = duplicate_estimate(source_estimate, user=request.user)
 
         messages.success(
             request,
-            f'Смета #{source_estimate.id} успешно скопирована. Себестоимость позиций актуализирована.'
+            f'Смета #{source_estimate.id} успешно скопирована. '
+            f'Открыта форма редактирования новой сметы #{new_estimate.id}.'
         )
-        return redirect('estimate_detail', estimate_id=new_estimate.id)
+        return redirect('estimate_update', estimate_id=new_estimate.id)
 
     return render(request, 'core/estimate_duplicate_confirm.html', {
         'estimate': source_estimate,

@@ -13,7 +13,13 @@
         <h3>Разделы</h3>
         <ul>
             <li>
+                <a href="{% url 'admin_user_list' %}">Пользователи</a>
+            </li>
+            <li>
                 <a href="{% url 'admin_category_list' %}">Категории услуг</a>
+            </li>
+            <li>
+                <a href="{% url 'admin_import_database' %}">Импорт Excel</a>
             </li>
         </ul>
     </div>

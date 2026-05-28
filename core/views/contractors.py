@@ -28,7 +28,7 @@ def contractor_list(request):
     categories = get_service_categories()
     selected_category_obj = get_contractor_category_by_id(selected_category)
 
-    paginator = Paginator(contractors, 15)
+    paginator = Paginator(contractors, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
