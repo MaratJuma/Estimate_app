@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 
 from ..forms import EstimateItemQtyForm, EstimateItemUpdateForm
 from ..models import EstimateDay, EstimateItem, Service
-from ..permissions import can_edit_estimates, deny_access
+from ..permissions import can_edit_estimate, deny_access
 from ..selectors.services import (
     get_active_services_for_estimate_item_queryset,
     get_contractor_by_id,
@@ -19,13 +19,14 @@ from ..services.estimate_items import (
 )
 from ..utils import build_pagination_slots, build_query_params_without_page
 
+
 @login_required
 def estimate_item_create(request, day_id):
-    if not can_edit_estimates(request.user):
-        return deny_access(request, 'У вас нет прав на редактирование смет.')
-
     day = get_object_or_404(EstimateDay, id=day_id)
     estimate = day.estimate
+
+    if not can_edit_estimate(request.user, estimate):
+        return deny_access(request, 'У вас нет прав на редактирование этой сметы.')
 
     if estimate.is_approved:
         messages.error(request, f'Смета #{estimate.id} утверждена. Добавление позиций запрещено.')
@@ -74,14 +75,15 @@ def estimate_item_create(request, day_id):
         'current_full_path': request.get_full_path(),
     })
 
+
 @login_required
 def estimate_item_create_for_service(request, day_id, service_id):
-    if not can_edit_estimates(request.user):
-        return deny_access(request, 'У вас нет прав на редактирование смет.')
-
     day = get_object_or_404(EstimateDay, id=day_id)
     estimate = day.estimate
     service = get_object_or_404(Service.objects.select_related('contractor'), id=service_id, is_active=True)
+
+    if not can_edit_estimate(request.user, estimate):
+        return deny_access(request, 'У вас нет прав на редактирование этой сметы.')
 
     if estimate.is_approved:
         messages.error(request, f'Смета #{estimate.id} утверждена. Добавление позиций запрещено.')
@@ -108,13 +110,14 @@ def estimate_item_create_for_service(request, day_id, service_id):
         'service': service,
     })
 
+
 @login_required
 def estimate_item_update(request, item_id):
-    if not can_edit_estimates(request.user):
-        return deny_access(request, 'У вас нет прав на редактирование смет.')
-
     item = get_object_or_404(EstimateItem, id=item_id)
     estimate = item.estimate_day.estimate
+
+    if not can_edit_estimate(request.user, estimate):
+        return deny_access(request, 'У вас нет прав на редактирование этой сметы.')
 
     if estimate.is_approved:
         messages.error(request, f'Смета #{estimate.id} утверждена. Редактирование позиций запрещено.')
@@ -145,14 +148,14 @@ def estimate_item_update(request, item_id):
         'display_cost_price': display_cost_price,
     })
 
+
 @login_required
 def estimate_item_delete(request, item_id):
-    if not can_edit_estimates(request.user):
-        return deny_access(request, 'У вас нет прав на редактирование смет.')
-
     item = get_object_or_404(EstimateItem, id=item_id)
-    estimate_id = item.estimate_day.estimate.id
     estimate = item.estimate_day.estimate
+
+    if not can_edit_estimate(request.user, estimate):
+        return deny_access(request, 'У вас нет прав на редактирование этой сметы.')
 
     if estimate.is_approved:
         messages.error(request, f'Смета #{estimate.id} утверждена. Удаление позиций запрещено.')
@@ -161,8 +164,9 @@ def estimate_item_delete(request, item_id):
     if request.method == 'POST':
         item.delete()
         messages.success(request, 'Позиция удалена.')
-        return redirect('estimate_detail', estimate_id=estimate_id)
+        return redirect('estimate_detail', estimate_id=estimate.id)
 
     return render(request, 'core/estimate_item_confirm_delete.html', {
         'item': item,
+        'estimate': estimate,
     })

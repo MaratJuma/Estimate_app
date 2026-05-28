@@ -4,15 +4,16 @@ from django.contrib.auth.decorators import login_required
 
 from ..forms import EstimateDayCreateForm, EstimateDayUpdateForm
 from ..models import Estimate, EstimateDay
-from ..permissions import can_edit_estimates, deny_access
+from ..permissions import can_edit_estimate, deny_access
 from ..services.estimate_days import create_next_estimate_day, delete_day_and_renumber
+
 
 @login_required
 def estimate_day_create(request, estimate_id):
-    if not can_edit_estimates(request.user):
-        return deny_access(request, 'У вас нет прав на редактирование смет.')
-
     estimate = get_object_or_404(Estimate, id=estimate_id)
+
+    if not can_edit_estimate(request.user, estimate):
+        return deny_access(request, 'У вас нет прав на редактирование этой сметы.')
 
     if estimate.is_approved:
         messages.error(request, f'Смета #{estimate.id} утверждена. Добавление дней запрещено.')
@@ -38,13 +39,14 @@ def estimate_day_create(request, estimate_id):
         'is_edit': False,
     })
 
+
 @login_required
 def estimate_day_update(request, day_id):
-    if not can_edit_estimates(request.user):
-        return deny_access(request, 'У вас нет прав на редактирование смет.')
-
     day = get_object_or_404(EstimateDay, id=day_id)
     estimate = day.estimate
+
+    if not can_edit_estimate(request.user, estimate):
+        return deny_access(request, 'У вас нет прав на редактирование этой сметы.')
 
     if estimate.is_approved:
         messages.error(request, f'Смета #{estimate.id} утверждена. Редактирование дней запрещено.')
@@ -65,13 +67,14 @@ def estimate_day_update(request, day_id):
         'is_edit': True,
     })
 
+
 @login_required
 def estimate_day_delete(request, day_id):
-    if not can_edit_estimates(request.user):
-        return deny_access(request, 'У вас нет прав на редактирование смет.')
-
     day = get_object_or_404(EstimateDay, id=day_id)
     estimate = day.estimate
+
+    if not can_edit_estimate(request.user, estimate):
+        return deny_access(request, 'У вас нет прав на редактирование этой сметы.')
 
     if estimate.is_approved:
         messages.error(request, f'Смета #{estimate.id} утверждена. Удаление дней запрещено.')
