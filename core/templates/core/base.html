@@ -30,7 +30,7 @@
 
                 {% if user.is_authenticated and is_admin_user %}
                 <a href="{% url 'admin_dashboard' %}">Администрирование</a>
-                <a href="/admin/">Админка Django</a>
+                {% comment %} <a href="/admin/">Админка Django</a> {% endcomment %}
                 {% endif %}
             </nav>
 
