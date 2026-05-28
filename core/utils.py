@@ -15,3 +15,13 @@ def build_pagination_slots(page_obj, window=7):
         return [1, 'dots', total - 4, total - 3, total - 2, total - 1, total]
 
     return [1, 'dots', current - 1, current, current + 1, 'dots', total]
+
+
+def build_query_params_without_page(request):
+    query_params = request.GET.copy()
+    query_params.pop('page', None)
+    return query_params.urlencode()
+
+
+def get_next_url(request):
+    return (request.GET.get('next') or request.POST.get('next') or '').strip()

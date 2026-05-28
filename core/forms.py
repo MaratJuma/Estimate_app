@@ -4,10 +4,9 @@ from .models import Estimate, EstimateItem, Contractor, Service, EstimateDay
 class EstimateForm(forms.ModelForm):
     class Meta:
         model = Estimate
-        fields = ['client_name', 'manager_name', 'comment']
+        fields = ['client_name', 'comment']
         labels = {
             'client_name': 'Клиент',
-            'manager_name': 'Менеджер',
             'comment': 'Комментарий',
         }
 
@@ -20,14 +19,14 @@ class EstimateItemCreateForm(forms.ModelForm):
             'service': 'Услуга',
             'qty': 'Количество',
         }
-        labels = {
-            'client_name': 'Клиент',
-            'manager_name': 'Менеджер',
-            'comment': 'Комментарий',
-        }
-        widgets = {
-            'comment': forms.Textarea(attrs={'rows': 4}),
-        }
+        # labels = {
+        #     'client_name': 'Клиент',
+        #     'manager_name': 'Менеджер',
+        #     'comment': 'Комментарий',
+        # }
+        # widgets = {
+        #     'comment': forms.Textarea(attrs={'rows': 4}),
+        # }
 
 
 class EstimateItemUpdateForm(forms.ModelForm):
@@ -171,4 +170,16 @@ class EstimateItemQtyForm(forms.ModelForm):
         }
         widgets = {
             'qty': forms.NumberInput(attrs={'step': '0.01', 'min': '0.01'}),
+        }
+
+
+from .models import ServiceCategory
+
+class ServiceCategoryForm(forms.ModelForm):
+    class Meta:
+        model = ServiceCategory
+        fields = ['name', 'sort_order']
+        labels = {
+            'name': 'Название категории',
+            'sort_order': 'Порядок сортировки',
         }

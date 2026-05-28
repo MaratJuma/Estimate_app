@@ -16,6 +16,7 @@ from .views import (
     estimate_item_create,
     estimate_item_delete,
     estimate_item_update,
+    estimate_delete,
 
     contractor_create,
     contractor_detail,
@@ -33,7 +34,15 @@ from .views import (
     estimate_excel_export,
 
     estimate_item_create_for_service,
+
+    admin_dashboard,
+    admin_category_list,
+    admin_category_create,
+    admin_category_update,
+    admin_category_delete,
+    
     )
+
 urlpatterns = [
     path('', home, name='home'),
     path('services/', service_list, name='service_list'),
@@ -69,8 +78,12 @@ urlpatterns = [
 
     path('estimates/<int:estimate_id>/print/', estimate_print, name='estimate_print'),
     path('estimates/<int:estimate_id>/approve/', estimate_approve, name='estimate_approve'),
+    path('estimates/<int:estimate_id>/delete/', estimate_delete, name='estimate_delete'),
     path('estimates/<int:estimate_id>/excel/', estimate_excel_export, name='estimate_excel_export'),
 
-    
-    
+    path('management/', admin_dashboard, name='admin_dashboard'),
+    path('management/categories/', admin_category_list, name='admin_category_list'),
+    path('management/categories/create/', admin_category_create, name='admin_category_create'),
+    path('management/categories/<int:category_id>/edit/', admin_category_update, name='admin_category_update'),
+    path('management/categories/<int:category_id>/delete/', admin_category_delete, name='admin_category_delete'),    
 ]

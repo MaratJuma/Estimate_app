@@ -5,7 +5,7 @@
 {% block content %}
     <h2>Сметы</h2>
 
-    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+    <div class="action-bar">
         {% if can_edit_estimates_ui %}
             <a class="button-link" href="{% url 'estimate_create' %}">Создать смету</a>
         {% endif %}
@@ -69,13 +69,9 @@
                                 <a href="{% url 'estimate_detail' estimate.id %}">{{ estimate.id }}</a>
                             </td>
                             <td>
-                                {% if estimate.is_approved %}
-                                    <span class="status-badge status-approved">Утверждена</span>
-                                    {% if estimate.approved_at %}
-                                        <div class="muted">{{ estimate.approved_at|date:"d.m.Y H:i" }}</div>
-                                    {% endif %}
-                                {% else %}
-                                    <span class="status-badge status-draft">В работе</span>
+                                {% include 'core/includes/status_badge.html' with is_approved=estimate.is_approved %}
+                                {% if estimate.approved_at %}
+                                    <div class="muted">{{ estimate.approved_at|date:"d.m.Y H:i" }}</div>
                                 {% endif %}
                             </td>
                             <td>{{ estimate.client_name }}</td>
@@ -88,18 +84,6 @@
                             <td>{{ estimate.created_at|date:"d.m.Y H:i" }}</td>
                             <td>
                                 <a class="button-link" href="{% url 'estimate_detail' estimate.id %}">Открыть</a>
-
-                                <!-- {% if can_edit_estimates_ui and not estimate.is_approved %}
-                                    | <a href="{% url 'estimate_update' estimate.id %}">Ред.</a>
-                                {% endif %}
-
-                                {% if can_edit_estimates_ui %}
-                                    | <a href="{% url 'estimate_duplicate' estimate.id %}">Дубл.</a>
-                                {% endif %}
-
-                                {% if can_approve_estimates_ui and not estimate.is_approved %}
-                                    | <a href="{% url 'estimate_approve' estimate.id %}">Утвердить</a>
-                                {% endif %} -->
                             </td>
                         </tr>
                     {% endfor %}

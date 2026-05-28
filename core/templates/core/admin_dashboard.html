@@ -1,0 +1,20 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Администрирование{% endblock %}
+
+{% block content %}
+    <h2>Администрирование</h2>
+
+    <div class="card">
+        <p class="muted">Внутренний административный раздел системы.</p>
+    </div>
+
+    <div class="card">
+        <h3>Разделы</h3>
+        <ul>
+            <li>
+                <a href="{% url 'admin_category_list' %}">Категории услуг</a>
+            </li>
+        </ul>
+    </div>
+{% endblock %}

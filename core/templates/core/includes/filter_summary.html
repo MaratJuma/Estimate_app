@@ -1,0 +1,15 @@
+{% if query or selected_category_name or selected_contractor_obj %}
+    <p class="muted">
+        Применён фильтр:
+        {% if query %} запрос "{{ query }}" {% endif %}
+        {% if selected_category_name %} категория "{{ selected_category_name }}" {% endif %}
+        {% if selected_contractor_obj %} поставщик "{{ selected_contractor_obj.name }}" {% endif %}
+    </p>
+{% endif %}
+
+{% if page_obj %}
+    <p class="muted">
+        Найдено {{ results_label|default:"записей" }}: {{ page_obj.paginator.count }}.
+        Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}.
+    </p>
+{% endif %}

@@ -1,0 +1,12 @@
+{% if query %}
+    <p class="muted">
+        Результаты поиска по запросу: "{{ query }}"
+    </p>
+{% endif %}
+
+{% if page_obj %}
+    <p class="muted">
+        Найдено записей: {{ page_obj.paginator.count }}.
+        Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}.
+    </p>
+{% endif %}

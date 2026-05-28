@@ -11,7 +11,22 @@ from django.utils.text import slugify
 from django.urls import reverse
 from urllib.parse import urlencode
 from django.core.paginator import Paginator
-from core.utils import build_pagination_slots
+# from core.utils import build_pagination_slots
+
+from .services.estimates import (
+    create_estimate_with_first_day,
+    approve_estimate,
+    duplicate_estimate,
+)
+from .services.estimate_days import (
+    create_next_estimate_day,
+    delete_day_and_renumber,
+)
+from .services.estimate_items import (
+    create_estimate_item_from_service,
+    update_estimate_item,
+)
+from .services.services import handle_service_cost_change
 
 from .permissions import (
         can_view_estimates,
@@ -24,6 +39,32 @@ from .permissions import (
         is_production_manager,
         is_sales_manager,
 )
+
+from .selectors.services import (
+    get_service_categories,
+    get_service_category_by_id,
+    get_contractor_by_id,
+    get_service_list_queryset,
+    get_active_services_for_estimate_item_queryset,
+    get_contractors_for_estimate_item_filter,
+    get_contractors_for_service_create,
+)
+from .selectors.contractors import (
+    get_contractor_list_queryset,
+    get_contractor_category_by_id,
+)
+from .selectors.estimates import (
+    get_estimate_list_queryset,
+    get_estimate_detail_queryset,
+    attach_estimate_list_summary,
+    attach_estimate_detail_day_summary,
+)
+from .utils import (
+    build_pagination_slots,
+    build_query_params_without_page,
+    get_next_url,
+)
+
 from .models import Service, Estimate, EstimateDay, EstimateItem, Contractor, ServiceCategory
 from .forms import (
         EstimateForm, 
@@ -49,30 +90,17 @@ def service_list(request):
     query = request.GET.get('q', '').strip()
     selected_category = request.GET.get('category', '').strip()
 
-    services = (
-        Service.objects.select_related('contractor')
-        .order_by('-id')
+    services = get_service_list_queryset(
+        query=query,
+        category_id=selected_category,
     )
 
-    if query:
-        services = services.filter(name__icontains=query)
-
-    if selected_category:
-        services = services.filter(category_id=selected_category)
-
-    categories = ServiceCategory.objects.order_by('sort_order', 'name')
+    categories = get_service_categories()
+    selected_category_obj = get_service_category_by_id(selected_category)
 
     paginator = Paginator(services, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-
-    selected_category_obj = None
-    if selected_category:
-        selected_category_obj = ServiceCategory.objects.filter(id=selected_category).first()
-
-    query_params = request.GET.copy()
-    if 'page' in query_params:
-        query_params.pop('page')
 
     pagination_slots = build_pagination_slots(page_obj)
 
@@ -85,7 +113,7 @@ def service_list(request):
         'selected_category': selected_category,
         'selected_category_obj': selected_category_obj,
         'selected_category_name': selected_category_obj.name if selected_category_obj else '',
-        'query_params': query_params.urlencode(),
+        'query_params': build_query_params_without_page(request),
         'current_full_path': request.get_full_path(),
     })
 
@@ -118,23 +146,8 @@ def service_update(request, service_id):
         form = ServiceUpdateForm(request.POST, instance=service)
         if form.is_valid():
             service = form.save()
+            handle_service_cost_change(service, old_cost_price)
 
-            if service.cost_price != old_cost_price:
-                estimate_items = list(
-                    EstimateItem.objects.filter(
-                        service=service,
-                        estimate_day__estimate__is_approved=False
-                    )
-                )
-
-                for item in estimate_items:
-                    item.cost_price = service.cost_price
-                    item.total_cost = item.qty * service.cost_price
-
-                EstimateItem.objects.bulk_update(
-                    estimate_items,
-                    ['cost_price', 'total_cost']
-                )
             messages.success(request, 'Услуга обновлена.')
             return redirect(next_url or 'service_list')
     else:
@@ -181,35 +194,21 @@ def contractor_list(request):
 
     # if not can_manage_contractors(request.user):
     #     return deny_access(request, 'У вас нет прав на управление поставщиками.')
-    
+
     query = request.GET.get('q', '').strip()
     selected_category = request.GET.get('category', '').strip()
 
-    selected_category_obj = None
-    if selected_category:
-        selected_category_obj = ServiceCategory.objects.filter(id=selected_category).first()
-
-    contractors = (
-        Contractor.objects
-        .annotate(services_count=Count('services', distinct=True))
-        .order_by('-id')
+    contractors = get_contractor_list_queryset(
+        query=query,
+        category_id=selected_category,
     )
 
-    if query:
-        contractors = contractors.filter(name__icontains=query)
+    categories = get_service_categories()
+    selected_category_obj = get_contractor_category_by_id(selected_category)
 
-    if selected_category:
-        contractors = contractors.filter(services__category_id=selected_category).distinct()
-
-    categories = ServiceCategory.objects.order_by('sort_order', 'name')
-
-    paginator = Paginator(contractors, 15)  # 15 поставщиков на страницу
+    paginator = Paginator(contractors, 15)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-
-    query_params = request.GET.copy()
-    if 'page' in query_params:
-        query_params.pop('page')
 
     pagination_slots = build_pagination_slots(page_obj)
 
@@ -223,7 +222,7 @@ def contractor_list(request):
         'selected_category_obj': selected_category_obj,
         'selected_category_name': selected_category_obj.name if selected_category_obj else '',
         'current_full_path': request.get_full_path(),
-        'query_params': query_params.urlencode(),
+        'query_params': build_query_params_without_page(request),
     })
 
 @login_required
@@ -287,49 +286,23 @@ def estimate_list(request):
 
     query = request.GET.get('q', '').strip()
 
-    estimates = (
-        Estimate.objects.all()
-        .prefetch_related('days__items__service')
-        .order_by('-created_at')
-    )
+    estimates = get_estimate_list_queryset(query=query)
 
-    if query:
-        estimates = estimates.filter(
-            Q(client_name__icontains=query) |
-            Q(manager_name__icontains=query) |
-            Q(comment__icontains=query)
-        )
-
-    paginator = Paginator(estimates, 15)  # 15 смет на страницу
+    paginator = Paginator(estimates, 15)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     for estimate in page_obj:
-        total_cost = Decimal('0.00')
-        total_client = Decimal('0.00')
+        attach_estimate_list_summary(estimate)
 
-        for day in estimate.days.all():
-            for item in day.items.all():
-                total_cost += item.total_cost
-                total_client += item.total_client
-
-        estimate.days_count_value = estimate.days.count()
-        estimate.total_cost_sum = total_cost
-        estimate.total_client_sum = total_client
-        estimate.margin_sum = total_client - total_cost
-
-    query_params = request.GET.copy()
-    if 'page' in query_params:
-        query_params.pop('page')
-
-    pagination_slots = build_pagination_slots(page_obj)    
+    pagination_slots = build_pagination_slots(page_obj)
 
     return render(request, 'core/estimate_list.html', {
         'estimates': page_obj,
         'page_obj': page_obj,
         'pagination_slots': pagination_slots,
         'query': query,
-        'query_params': query_params.urlencode(),
+        'query_params': build_query_params_without_page(request),
     })
 
 @login_required
@@ -337,44 +310,18 @@ def estimate_detail(request, estimate_id):
     if not can_view_estimates(request.user):
         return deny_access(request, 'У вас нет прав на просмотр смет.')
 
-    estimate = get_object_or_404(Estimate, id=estimate_id)
-    days = estimate.days.all().order_by('day_number').prefetch_related('items__service')
+    estimate = get_object_or_404(get_estimate_detail_queryset(), id=estimate_id)
+    days = estimate.days.all().order_by('day_number')
 
-    total_cost = Decimal('0.00')
-    total_client = Decimal('0.00')
-
-    for day in days:
-        day_cost = Decimal('0.00')
-        day_client = Decimal('0.00')
-
-        for item in day.items.all():
-            item.display_cost_price = item.cost_price
-            item.display_total_cost = item.total_cost
-            item.display_client_price = item.client_price
-            item.display_total_client = item.total_client
-
-            day_cost += item.display_total_cost
-            day_client += item.display_total_client
-
-        day.total_cost_sum = day_cost
-        day.total_client_sum = day_client
-
-        total_cost += day_cost
-        total_client += day_client
-
-    margin = total_client - total_cost
-    margin_percent = Decimal('0.00')
-
-    if total_client != 0:
-        margin_percent = (margin / total_client) * Decimal('100')
+    summary = attach_estimate_detail_day_summary(days)
 
     return render(request, 'core/estimate_detail.html', {
         'estimate': estimate,
-        'days': days,
-        'total_cost': total_cost,
-        'total_client': total_client,
-        'margin': margin,
-        'margin_percent': margin_percent,
+        'days': summary['days'],
+        'total_cost': summary['total_cost'],
+        'total_client': summary['total_client'],
+        'margin': summary['margin'],
+        'margin_percent': summary['margin_percent'],
         'days_count': days.count(),
         'current_full_path': request.get_full_path(),
     })
@@ -388,11 +335,10 @@ def estimate_create(request):
     if request.method == 'POST':
         form = EstimateForm(request.POST)
         if form.is_valid():
-            estimate = form.save()
-            EstimateDay.objects.create(estimate=estimate, day_number=1)
+            estimate = create_estimate_with_first_day(**form.cleaned_data)
             return redirect('estimate_detail', estimate_id=estimate.id)
-    else:
-        form = EstimateForm()
+        else:
+            form = EstimateForm()
 
     return render(request, 'core/estimate_form.html', {
         'form': form,
@@ -416,58 +362,24 @@ def estimate_item_create(request, day_id):
     selected_category = request.GET.get('category', '').strip()
     selected_contractor = request.GET.get('contractor', '').strip()
 
-    selected_category_obj = None
-    if selected_category:
-        selected_category_obj = ServiceCategory.objects.filter(id=selected_category).first()
+    services = get_active_services_for_estimate_item_queryset(
+        query=query,
+        category_id=selected_category,
+        contractor_id=selected_contractor,
+    )
 
-    base_services = Service.objects.select_related('contractor').filter(is_active=True)
+    categories = get_service_categories()
+    contractors = get_contractors_for_estimate_item_filter(
+        query=query,
+        category_id=selected_category,
+    )
 
-    services = base_services
-
-    if query:
-        services = services.filter(name__icontains=query)
-
-    if selected_category:
-        services = services.filter(category__id=selected_category)
-
-    if selected_contractor:
-        services = services.filter(contractor_id=selected_contractor)
-
-    services = services.order_by('name', 'id')
-
-    categories_qs = base_services
-
-    if query:
-        categories_qs = categories_qs.filter(name__icontains=query)
-
-    if selected_contractor:
-        categories_qs = categories_qs.filter(contractor_id=selected_contractor)
-
-    categories = ServiceCategory.objects.order_by('sort_order', 'name')
-
-    contractors_qs = base_services
-
-    if query:
-        contractors_qs = contractors_qs.filter(name__icontains=query)
-
-    if selected_category:
-        contractors_qs = contractors_qs.filter(category_id=selected_category)
-
-    contractor_ids = contractors_qs.values_list('contractor_id', flat=True).distinct()
-
-    contractors = Contractor.objects.filter(id__in=contractor_ids).order_by('name')
-
-    selected_contractor_obj = None
-    if selected_contractor:
-        selected_contractor_obj = Contractor.objects.filter(id=selected_contractor).first()
+    selected_category_obj = get_service_category_by_id(selected_category)
+    selected_contractor_obj = get_contractor_by_id(selected_contractor)
 
     paginator = Paginator(services, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-
-    query_params = request.GET.copy()
-    if 'page' in query_params:
-        query_params.pop('page')
 
     pagination_slots = build_pagination_slots(page_obj)
 
@@ -477,7 +389,7 @@ def estimate_item_create(request, day_id):
         'services': page_obj,
         'page_obj': page_obj,
         'pagination_slots': pagination_slots,
-        'query_params': query_params.urlencode(),
+        'query_params': build_query_params_without_page(request),
         'query': query,
         'categories': categories,
         'selected_category': selected_category,
@@ -506,16 +418,11 @@ def estimate_item_create_for_service(request, day_id, service_id):
     if request.method == 'POST':
         form = EstimateItemQtyForm(request.POST)
         if form.is_valid():
-            item = form.save(commit=False)
-            qty = item.qty
-
-            item.estimate_day = day
-            item.service = service
-            item.cost_price = service.cost_price
-            item.client_price = service.client_price
-            item.total_cost = qty * service.cost_price
-            item.total_client = qty * service.client_price
-            item.save()
+            create_estimate_item_from_service(
+                day=day,
+                service=service,
+                qty=form.cleaned_data['qty'],
+            )
 
             messages.success(request, f'Услуга "{service.name}" добавлена в смету.')
             return redirect('estimate_detail', estimate_id=estimate.id)
@@ -569,13 +476,11 @@ def estimate_item_update(request, item_id):
     if request.method == 'POST':
         form = EstimateItemUpdateForm(request.POST, instance=item)
         if form.is_valid():
-            item = form.save(commit=False)
-
-            qty = item.qty
-            item.cost_price = item.service.cost_price
-            item.total_cost = qty * item.cost_price
-            item.total_client = qty * item.client_price
-            item.save()
+            update_estimate_item(
+            item=item,
+            qty=form.cleaned_data['qty'],
+            client_price=form.cleaned_data['client_price'],
+        )
 
             messages.success(request, 'Позиция сметы обновлена.')
             return redirect('estimate_detail', estimate_id=estimate.id)
@@ -632,16 +537,13 @@ def estimate_day_create(request, estimate_id):
     if request.method == 'POST':
         form = EstimateDayCreateForm(request.POST)
         if form.is_valid():
-            day = form.save(commit=False)
+            day = create_next_estimate_day(
+                estimate=estimate,
+                title=form.cleaned_data['title'],
+                description=form.cleaned_data['description'],
+            )
 
-            last_day = estimate.days.order_by('-day_number').first()
-            next_day_number = last_day.day_number + 1 if last_day else 1
-
-            day.estimate = estimate
-            day.day_number = next_day_number
-            day.save()
-
-            messages.success(request, f'День {next_day_number} добавлен.')
+            messages.success(request, f'День {day.day_number} добавлен.')
             return redirect('estimate_detail', estimate_id=estimate.id)
     else:
         form = EstimateDayCreateForm()
@@ -704,13 +606,7 @@ def estimate_day_delete(request, day_id):
     deleted_day_number = day.day_number
 
     if request.method == 'POST':
-        day.delete()
-
-        EstimateDay.objects.filter(
-            estimate=estimate,
-            day_number__gt=deleted_day_number
-        ).update(day_number=F('day_number') - 1)
-
+        deleted_day_number = delete_day_and_renumber(day)
         messages.success(request, f'День {deleted_day_number} удалён.')
         return redirect('estimate_detail', estimate_id=estimate.id)
 
@@ -730,47 +626,7 @@ def estimate_duplicate(request, estimate_id):
     )
 
     if request.method == 'POST':
-        if source_estimate.comment:
-            new_comment = f"{source_estimate.comment} (копия сметы #{source_estimate.id})"
-        else:
-            new_comment = f"Копия сметы #{source_estimate.id}"
-
-        new_estimate = Estimate.objects.create(
-            client_name=source_estimate.client_name,
-            manager_name=source_estimate.manager_name,
-            comment=new_comment,
-            is_approved=False,
-            approved_at=None,
-        )
-
-        day_mapping = {}
-
-        for day in source_estimate.days.all():
-            new_day = EstimateDay.objects.create(
-                estimate=new_estimate,
-                day_number=day.day_number,
-                title=day.title,
-                description=day.description,
-            )
-            day_mapping[day.id] = new_day
-
-        for day in source_estimate.days.all():
-            new_day = day_mapping[day.id]
-
-            for item in day.items.all():
-                current_cost_price = item.service.cost_price
-                qty = item.qty
-                client_price = item.client_price
-
-                EstimateItem.objects.create(
-                    estimate_day=new_day,
-                    service=item.service,
-                    qty=qty,
-                    cost_price=current_cost_price,
-                    client_price=client_price,
-                    total_cost=qty * current_cost_price,
-                    total_client=qty * client_price,
-                )
+        new_estimate = duplicate_estimate(source_estimate)
 
         messages.success(
             request,
@@ -782,6 +638,8 @@ def estimate_duplicate(request, estimate_id):
         'estimate': source_estimate,
     })
 
+
+@login_required
 def contractor_create(request):
     if not can_manage_contractors(request.user):
         return deny_access(request, 'У вас нет прав на управление поставщиками.')
@@ -813,10 +671,9 @@ def contractor_create(request):
 
 @login_required
 def service_create(request):
-
     if not can_manage_services(request.user):
         return deny_access(request, 'У вас нет прав на управление услугами.')
-    
+
     if request.method == 'POST':
         query = request.POST.get('q', '').strip()
         selected_category = request.POST.get('category', '').strip()
@@ -824,14 +681,9 @@ def service_create(request):
         query = request.GET.get('q', '').strip()
         selected_category = request.GET.get('category', '').strip()
 
-    contractors = Contractor.objects.all().order_by('name')
-    next_url = request.GET.get('next') or request.POST.get('next')
-
-    if query:
-        contractors = contractors.filter(name__icontains=query)
-
-
-    categories = ServiceCategory.objects.order_by('sort_order', 'name')
+    contractors = get_contractors_for_service_create(query=query)
+    categories = get_service_categories()
+    next_url = get_next_url(request)
 
     if request.method == 'POST':
         form = ServiceCreateForm(request.POST)
@@ -841,10 +693,6 @@ def service_create(request):
             form.save()
             messages.success(request, 'Услуга создана.')
             return redirect('service_list')
-        
-        if next_url:
-            return redirect(next_url)
-        
     else:
         form = ServiceCreateForm()
         form.fields['contractor'].queryset = contractors
@@ -942,14 +790,6 @@ def estimate_print(request, estimate_id):
     })
 
 
-    fonts_dir = os.path.join(settings.BASE_DIR, 'static', 'fonts')
-    regular_path = os.path.join(fonts_dir, 'DejaVuSans.ttf')
-
-    if not os.path.exists(regular_path):
-        raise FileNotFoundError(f'Не найден шрифт: {regular_path}')
-
-    pdfmetrics.registerFont(TTFont('DejaVuSans', regular_path))
-
 
 @login_required
 def estimate_approve(request, estimate_id):
@@ -963,16 +803,10 @@ def estimate_approve(request, estimate_id):
         return redirect('estimate_detail', estimate_id=estimate.id)
 
     if request.method == 'POST':
-        for day in estimate.days.all().prefetch_related('items__service'):
-            for item in day.items.all():
-                item.cost_price = item.service.cost_price
-                item.total_cost = item.qty * item.cost_price
-                item.total_client = item.qty * item.client_price
-                item.save()
-
-        estimate.is_approved = True
-        estimate.approved_at = timezone.now()
-        estimate.save()
+        if request.method == 'POST':
+            approve_estimate(estimate)
+            messages.success(request, f'Смета #{estimate.id} утверждена. Редактирование заблокировано.')
+            return redirect('estimate_detail', estimate_id=estimate.id)
 
         messages.success(request, f'Смета #{estimate.id} утверждена. Редактирование заблокировано.')
         return redirect('estimate_detail', estimate_id=estimate.id)

@@ -1,0 +1,45 @@
+{% extends 'core/base.html' %}
+
+{% block title %}
+    {% if is_edit %}Редактирование категории{% else %}Новая категория{% endif %}
+{% endblock %}
+
+{% block content %}
+    <h2>
+        {% if is_edit %}
+            Редактирование категории
+        {% else %}
+            Новая категория
+        {% endif %}
+    </h2>
+
+    {% if is_edit %}
+        <div class="card card-spaced">
+            <p><strong>ID:</strong> {{ category.id }}</p>
+            <p><strong>Количество услуг:</strong> {{ services_count }}</p>
+        </div>
+    {% endif %}
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button type="submit">
+                    {% if is_edit %}Сохранить изменения{% else %}Создать категорию{% endif %}
+                </button>
+
+                {% if is_edit and services_count == 0 %}
+                    <a class="danger-link" href="{% url 'admin_category_delete' category.id %}">
+                        Удалить
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <p>
+        <a class="button-link" href="{% url 'admin_category_list' %}">Назад к списку категорий</a>
+    </p>
+{% endblock %}

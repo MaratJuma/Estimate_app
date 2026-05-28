@@ -1,0 +1,11 @@
+<div class="form-actions">
+    <button type="submit">{{ submit_label|default:"Сохранить" }}</button>
+
+    {% if cancel_url %}
+        <a class="button-link" href="{{ cancel_url }}">{{ cancel_label|default:"Отмена" }}</a>
+    {% endif %}
+
+    {% if delete_url %}
+        <a class="danger-link" href="{{ delete_url }}">{{ delete_label|default:"Удалить" }}</a>
+    {% endif %}
+</div>

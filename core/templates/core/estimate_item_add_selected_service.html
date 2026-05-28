@@ -5,12 +5,12 @@
 {% block content %}
     <h2>Добавить услугу в смету</h2>
 
-    <div class="card" style="margin-bottom: 20px;">
+    <div class="card card-spaced">
         <p><strong>Смета:</strong> №{{ estimate.id }} — {{ estimate.client_name }}</p>
         <p><strong>День:</strong> {{ day.day_number }}{% if day.title %} — {{ day.title }}{% endif %}</p>
     </div>
 
-    <div class="card" style="margin-bottom: 20px;">
+    <div class="card card-spaced">
         <p><strong>Название услуги:</strong> {{ service.name }}</p>
         <p>
             <strong>Поставщик:</strong>

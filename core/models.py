@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 class Contractor(models.Model):
     name = models.CharField(max_length=255)
@@ -57,6 +58,14 @@ class Estimate(models.Model):
     comment = models.TextField(blank=True)
     is_approved = models.BooleanField(default=False)
     approved_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='created_estimates',
+        verbose_name='Создал',
+    )
 
     def days_count(self):
         return self.days.count()

@@ -24,13 +24,13 @@
     <p><strong>Количество дней:</strong> {{ days_count }}</p>
 </div>
 
-<div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
-    {% if can_edit_estimates_ui and not estimate.is_approved %}
+<div class="action-bar">
+    {% if can_edit_estimate_ui and not estimate.is_approved %}
         <a class="button-link" href="{% url 'estimate_update' estimate.id %}">Редактировать</a>
     {% endif %}
 
-    {% if can_edit_estimates_ui %}
-    <a class="button-link" href="{% url 'estimate_duplicate' estimate.id %}">Дублировать</a>
+    {% if can_duplicate_estimate_ui %}
+        <a class="button-link" href="{% url 'estimate_duplicate' estimate.id %}">Дублировать</a>
     {% endif %}
 
     {% if can_approve_estimates_ui and not estimate.is_approved %}
@@ -53,7 +53,7 @@
 
 {% for day in days %}
     <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+        <div class="detail-grid">
             <h4 style="margin:0;">
                 День {{ day.day_number }}
                 {% if day.title %}

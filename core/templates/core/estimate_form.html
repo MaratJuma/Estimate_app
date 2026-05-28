@@ -13,17 +13,34 @@
         {% endif %}
     </h2>
 
+    <div class="card card-spaced">
+        {% if is_edit %}
+            <p><strong>Менеджер:</strong> {{ estimate.manager_name }}</p>
+        {% else %}
+            <p><strong>Менеджер:</strong> {{ user.get_full_name|default:user.username }}</p>
+        {% endif %}
+    </div>
+
     <div class="card">
         <form method="post">
             {% csrf_token %}
             {{ form.as_p }}
-            <button type="submit">
-                {% if is_edit %}Сохранить изменения{% else %}Сохранить смету{% endif %}
-            </button>
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button type="submit">
+                    {% if is_edit %}Сохранить изменения{% else %}Сохранить смету{% endif %}
+                </button>
+
+                {% if is_edit and can_delete_estimate_ui and can_show_delete_button %}
+                    <a class="danger-link" href="{% url 'estimate_delete' estimate.id %}">
+                        Удалить смету
+                    </a>
+                {% endif %}
+            </div>
         </form>
     </div>
 
-        <p>
+    <p>
         {% if is_edit %}
             <a class="button-link" href="{% url 'estimate_detail' estimate.id %}">Назад к смете</a>
         {% else %}

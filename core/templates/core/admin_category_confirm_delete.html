@@ -1,0 +1,41 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Удаление категории{% endblock %}
+
+{% block content %}
+    <h2>Удаление категории</h2>
+
+    <div class="card">
+        <p><strong>ID:</strong> {{ category.id }}</p>
+        <p><strong>Название:</strong> {{ category.name }}</p>
+        <p><strong>Количество услуг:</strong> {{ services_count }}</p>
+
+        {% if services_count == 0 %}
+            <p class="muted">
+                Категория пустая и может быть удалена.
+            </p>
+        {% else %}
+            <p class="muted">
+                Категорию нельзя удалить, потому что в ней есть связанные услуги.
+            </p>
+        {% endif %}
+    </div>
+
+    {% if services_count == 0 %}
+        <div class="card">
+            <form method="post">
+                {% csrf_token %}
+                <p>Вы уверены, что хотите удалить эту категорию?</p>
+
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button type="submit">Да, удалить</button>
+                    <a class="button-link" href="{% url 'admin_category_list' %}">Отмена</a>
+                </div>
+            </form>
+        </div>
+    {% else %}
+        <p>
+            <a class="button-link" href="{% url 'admin_category_list' %}">Назад к списку категорий</a>
+        </p>
+    {% endif %}
+{% endblock %}

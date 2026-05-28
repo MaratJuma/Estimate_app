@@ -14,16 +14,15 @@
     </h2>
 
     {% if is_edit %}
-        <div class="card" style="margin-bottom: 20px;">
+        <div class="card card-spaced">
             <p><strong>Название услуги:</strong> {{ service.name }}</p>
             <p><strong>Поставщик:</strong> {{ service.contractor.name }}</p>
         </div>
     {% endif %}
 
     {% if is_contractor_context %}
-        <div class="card" style="margin-bottom: 20px;">
+        <div class="card card-spaced">
             <p><strong>Поставщик:</strong> {{ contractor.name }}</p>
-            <!-- <p><strong>Категория:</strong> {{ contractor.category|default:"—" }}</p> -->
             <p><strong>Контактное лицо:</strong> {{ contractor.contact_name|default:"—" }}</p>
         </div>
     {% endif %}
@@ -71,7 +70,7 @@
                 <p class="muted">
                     Применён фильтр:
                     {% if query %} запрос "{{ query }}" {% endif %}
-                    {% if selected_category %} категория "{{ selected_category }}" {% endif %}
+                    {% if selected_category_name %} категория "{{ selected_category_name }}" {% endif %}
                 </p>
             {% endif %}
         </div>

@@ -5,7 +5,7 @@
 {% block content %}
     <h2>Добавить позицию в смету</h2>
 
-    <div class="card" style="margin-bottom: 20px;">
+    <div class="card card-spaced">
         <p><strong>Смета:</strong> №{{ estimate.id }} — {{ estimate.client_name }}</p>
         <p><strong>День:</strong> {{ day.day_number }}{% if day.title %} — {{ day.title }}{% endif %}</p>
     </div>
@@ -102,7 +102,7 @@
                             <td>{{ service.category.name|default:"—" }}</td>
                             <td>{{ service.cost_price|floatformat:2 }}</td>
                             <td>{{ service.client_price|floatformat:2 }}</td>
-                            <td style="min-width: 280px; max-width: 420px; white-space: normal; line-height: 1.4;">
+                            <td class="table-comment-wide">
                                 {{ service.description|default:"—"|truncatechars:200 }}
                             </td>
                             <td>
