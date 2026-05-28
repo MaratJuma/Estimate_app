@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib.auth.decorators import login_required
 
 from ..forms import EstimateItemQtyForm, EstimateItemUpdateForm
 from ..models import EstimateDay, EstimateItem, Service
@@ -18,7 +19,7 @@ from ..services.estimate_items import (
 )
 from ..utils import build_pagination_slots, build_query_params_without_page
 
-
+@login_required
 def estimate_item_create(request, day_id):
     if not can_edit_estimates(request.user):
         return deny_access(request, 'У вас нет прав на редактирование смет.')
@@ -73,7 +74,7 @@ def estimate_item_create(request, day_id):
         'current_full_path': request.get_full_path(),
     })
 
-
+@login_required
 def estimate_item_create_for_service(request, day_id, service_id):
     if not can_edit_estimates(request.user):
         return deny_access(request, 'У вас нет прав на редактирование смет.')
@@ -107,7 +108,7 @@ def estimate_item_create_for_service(request, day_id, service_id):
         'service': service,
     })
 
-
+@login_required
 def estimate_item_update(request, item_id):
     if not can_edit_estimates(request.user):
         return deny_access(request, 'У вас нет прав на редактирование смет.')
@@ -144,7 +145,7 @@ def estimate_item_update(request, item_id):
         'display_cost_price': display_cost_price,
     })
 
-
+@login_required
 def estimate_item_delete(request, item_id):
     if not can_edit_estimates(request.user):
         return deny_access(request, 'У вас нет прав на редактирование смет.')

@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib.auth.decorators import login_required
 
 from ..forms import (
     ServiceCreateForm,
@@ -23,7 +24,7 @@ from ..selectors.services import (
 from ..services.services import handle_service_cost_change
 from ..utils import build_pagination_slots, build_query_params_without_page, get_next_url
 
-
+@login_required
 def service_list(request):
     query = request.GET.get('q', '').strip()
     selected_category = request.GET.get('category', '').strip()
@@ -55,7 +56,7 @@ def service_list(request):
         'current_full_path': request.get_full_path(),
     })
 
-
+@login_required
 def service_detail(request, service_id):
     if not can_manage_services(request.user) and not is_sales_manager(request.user):
         return deny_access(request, 'У вас нет прав на просмотр услуги.')
@@ -68,7 +69,7 @@ def service_detail(request, service_id):
         'next_url': next_url,
     })
 
-
+@login_required
 def service_create(request):
     if not can_manage_services(request.user):
         return deny_access(request, 'У вас нет прав на управление услугами.')
@@ -106,7 +107,7 @@ def service_create(request):
         'current_full_path': request.get_full_path(),
     })
 
-
+@login_required
 def service_create_for_contractor(request, contractor_id):
     if not can_manage_services(request.user):
         return deny_access(request, 'У вас нет прав на управление услугами.')
@@ -141,7 +142,7 @@ def service_create_for_contractor(request, contractor_id):
         'next_url': next_url,
     })
 
-
+@login_required
 def service_update(request, service_id):
     if not can_manage_services(request.user):
         return deny_access(request, 'У вас нет прав на управление услугами.')
@@ -170,7 +171,7 @@ def service_update(request, service_id):
         'current_full_path': request.get_full_path(),
     })
 
-
+@login_required
 def service_delete(request, service_id):
     if not can_manage_services(request.user):
         return deny_access(request, 'У вас нет прав на управление услугами.')

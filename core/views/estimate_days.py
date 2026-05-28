@@ -1,12 +1,13 @@
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib.auth.decorators import login_required
 
 from ..forms import EstimateDayCreateForm, EstimateDayUpdateForm
 from ..models import Estimate, EstimateDay
 from ..permissions import can_edit_estimates, deny_access
 from ..services.estimate_days import create_next_estimate_day, delete_day_and_renumber
 
-
+@login_required
 def estimate_day_create(request, estimate_id):
     if not can_edit_estimates(request.user):
         return deny_access(request, 'У вас нет прав на редактирование смет.')
@@ -37,7 +38,7 @@ def estimate_day_create(request, estimate_id):
         'is_edit': False,
     })
 
-
+@login_required
 def estimate_day_update(request, day_id):
     if not can_edit_estimates(request.user):
         return deny_access(request, 'У вас нет прав на редактирование смет.')
@@ -64,7 +65,7 @@ def estimate_day_update(request, day_id):
         'is_edit': True,
     })
 
-
+@login_required
 def estimate_day_delete(request, day_id):
     if not can_edit_estimates(request.user):
         return deny_access(request, 'У вас нет прав на редактирование смет.')

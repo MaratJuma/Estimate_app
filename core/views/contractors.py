@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.contrib.auth.decorators import login_required
 
 from ..forms import ContractorForm
 from ..models import Contractor
@@ -15,7 +16,7 @@ from ..selectors.contractors import (
 from ..selectors.services import get_service_categories
 from ..utils import build_pagination_slots, build_query_params_without_page, get_next_url
 
-
+@login_required
 def contractor_list(request):
     query = request.GET.get('q', '').strip()
     selected_category = request.GET.get('category', '').strip()
@@ -47,7 +48,7 @@ def contractor_list(request):
         'query_params': build_query_params_without_page(request),
     })
 
-
+@login_required
 def contractor_detail(request, contractor_id):
     contractor = get_object_or_404(Contractor, id=contractor_id)
     services = contractor.services.all().order_by('name', 'id')
@@ -67,7 +68,7 @@ def contractor_detail(request, contractor_id):
         'contractor_detail_return_url': contractor_detail_return_url,
     })
 
-
+@login_required
 def contractor_create(request):
     if not can_manage_contractors(request.user):
         return deny_access(request, 'У вас нет прав на управление поставщиками.')
@@ -96,7 +97,7 @@ def contractor_create(request):
         'current_full_path': request.get_full_path(),
     })
 
-
+@login_required
 def contractor_update(request, contractor_id):
     if not can_manage_contractors(request.user):
         return deny_access(request, 'У вас нет прав на управление поставщиками.')

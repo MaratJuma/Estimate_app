@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib.auth.decorators import login_required
 
 from ..forms import EstimateForm
 from ..models import Estimate, EstimateItem
@@ -27,7 +28,7 @@ from ..services.estimates import (
 )
 from ..utils import build_pagination_slots, build_query_params_without_page
 
-
+@login_required
 def estimate_list(request):
     if not can_view_estimates(request.user):
         return deny_access(request, 'У вас нет прав на просмотр смет.')
@@ -53,7 +54,7 @@ def estimate_list(request):
         'query_params': build_query_params_without_page(request),
     })
 
-
+@login_required
 def estimate_detail(request, estimate_id):
     if not can_view_estimates(request.user):
         return deny_access(request, 'У вас нет прав на просмотр смет.')
@@ -84,7 +85,7 @@ def estimate_detail(request, estimate_id):
         'can_show_delete_button': can_show_delete_button,
     })
 
-
+@login_required
 def estimate_create(request):
     if not can_edit_estimates(request.user):
         return deny_access(request, 'У вас нет прав на создание смет.')
@@ -107,7 +108,7 @@ def estimate_create(request):
         'title': 'Создание сметы',
     })
 
-
+@login_required
 def estimate_update(request, estimate_id):
     estimate = get_object_or_404(Estimate, id=estimate_id)
 
@@ -139,7 +140,7 @@ def estimate_update(request, estimate_id):
         'can_show_delete_button': can_show_delete_button,
     })
 
-
+@login_required
 def estimate_duplicate(request, estimate_id):
     source_estimate = get_object_or_404(
         get_estimate_detail_queryset(),
@@ -163,7 +164,7 @@ def estimate_duplicate(request, estimate_id):
         'estimate': source_estimate,
     })
 
-
+@login_required
 def estimate_delete(request, estimate_id):
     estimate = get_object_or_404(Estimate, id=estimate_id)
 
@@ -192,7 +193,7 @@ def estimate_delete(request, estimate_id):
         'estimate': estimate,
     })
 
-
+@login_required
 def estimate_approve(request, estimate_id):
     if not can_approve_estimates(request.user):
         return deny_access(request, 'У вас нет прав на утверждение смет.')

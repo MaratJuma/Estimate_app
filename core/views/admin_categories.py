@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib.auth.decorators import login_required
 
 from ..forms import ServiceCategoryForm
 from ..models import ServiceCategory
@@ -10,14 +11,14 @@ from ..selectors.admin_categories import (
 )
 from ..services.admin_categories import delete_service_category_if_empty
 
-
+@login_required
 def admin_dashboard(request):
     if not can_manage_admin_panel(request.user):
         return deny_access(request, 'У вас нет прав на доступ к административному разделу.')
 
     return render(request, 'core/admin_dashboard.html')
 
-
+@login_required
 def admin_category_list(request):
     if not can_manage_admin_panel(request.user):
         return deny_access(request, 'У вас нет прав на управление категориями.')
@@ -28,7 +29,7 @@ def admin_category_list(request):
         'categories': categories,
     })
 
-
+@login_required
 def admin_category_create(request):
     if not can_manage_admin_panel(request.user):
         return deny_access(request, 'У вас нет прав на управление категориями.')
@@ -47,7 +48,7 @@ def admin_category_create(request):
         'is_edit': False,
     })
 
-
+@login_required
 def admin_category_update(request, category_id):
     if not can_manage_admin_panel(request.user):
         return deny_access(request, 'У вас нет прав на управление категориями.')
@@ -72,7 +73,7 @@ def admin_category_update(request, category_id):
         'services_count': category_with_usage.services_count if category_with_usage else 0,
     })
 
-
+@login_required
 def admin_category_delete(request, category_id):
     if not can_manage_admin_panel(request.user):
         return deny_access(request, 'У вас нет прав на управление категориями.')

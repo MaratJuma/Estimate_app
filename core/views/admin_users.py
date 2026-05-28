@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 
 from ..forms import AdminUserCreateForm, AdminUserUpdateForm
 from ..permissions import can_manage_admin_panel, deny_access
@@ -14,7 +15,7 @@ from ..services.admin_users import (
 
 User = get_user_model()
 
-
+@login_required
 def admin_user_list(request):
     if not can_manage_admin_panel(request.user):
         return deny_access(request, 'У вас нет прав на управление пользователями.')
@@ -35,7 +36,7 @@ def admin_user_list(request):
         'user_rows': user_rows,
     })
 
-
+@login_required
 def admin_user_create(request):
     if not can_manage_admin_panel(request.user):
         return deny_access(request, 'У вас нет прав на управление пользователями.')
@@ -61,7 +62,7 @@ def admin_user_create(request):
         'is_edit': False,
     })
 
-
+@login_required
 def admin_user_update(request, user_id):
     if not can_manage_admin_panel(request.user):
         return deny_access(request, 'У вас нет прав на управление пользователями.')
@@ -95,7 +96,7 @@ def admin_user_update(request, user_id):
         'can_delete': target_user.id != request.user.id,
     })
 
-
+@login_required
 def admin_user_delete(request, user_id):
     if not can_manage_admin_panel(request.user):
         return deny_access(request, 'У вас нет прав на управление пользователями.')

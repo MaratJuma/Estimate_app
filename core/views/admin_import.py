@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 
 from ..forms import DatabaseImportForm
 from ..permissions import can_manage_admin_panel, deny_access
@@ -9,7 +10,7 @@ from ..services.imports import (
     preview_services_import,
 )
 
-
+@login_required
 def admin_import_database(request):
     if not can_manage_admin_panel(request.user):
         return deny_access(request, 'У вас нет прав на импорт данных.')
