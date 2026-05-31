@@ -7,16 +7,16 @@ from core.models import Contractor, Service, ServiceCategory
 
 
 EXPECTED_HEADERS = [
-    'Категория',
-    'Услуга',
-    'комментарий по услуге',
     'Подрядчик',
-    'комментарий по подрядчику',
-    'Себестоимость',
-    'Стоимость',
+    'Комментарий к подрядчику',
     'Телефон',
-    'e-mail',
-    'ссылка на медиа',
+    'E-mail',
+    'Категория услуги',
+    'Услуга',
+    'Комментарий к услуге',
+    'Себестоимость',
+    'Цена',
+    'Медиа',
 ]
 
 PREVIEW_LIMIT = 20
@@ -87,16 +87,6 @@ def contractor_needs_update(contractor, *, notes, phone, email):
     if email and contractor.email != email:
         return True
     return False
-
-
-def service_needs_update(service, *, description, cost_price, client_price, image_url):
-    return any([
-        service.description != description,
-        service.cost_price != cost_price,
-        service.client_price != client_price,
-        service.image_url != image_url,
-        service.is_active is not True,
-    ])
 
 
 def get_or_create_category(name, stats, *, dry_run=False, category_cache=None):
@@ -182,6 +172,16 @@ def get_or_create_or_update_contractor(
                 email=email,
             ):
                 stats['contractors_updated'] += 1
+
+                if not dry_run:
+                    if notes:
+                        contractor.notes = notes
+                    if phone:
+                        contractor.phone = phone
+                    if email:
+                        contractor.email = email
+                    contractor.save()
+
                 return contractor, 'update'
 
             stats['contractors_found'] += 1
@@ -308,6 +308,15 @@ def create_or_update_service(
 
         if cached['exists_in_db']:
             service = cached['object']
+
+            if not dry_run:
+                service.description = description
+                service.cost_price = cost_price
+                service.client_price = client_price
+                service.image_url = image_url
+                service.is_active = True
+                service.save()
+
             stats['services_updated'] += 1
             return service, 'update'
 
@@ -411,8 +420,8 @@ def append_preview_row(
         'category_name': category_name,
         'service_name': service_name,
         'contractor_name': contractor_name,
-        'cost_price': str(cost_price),
-        'client_price': str(client_price),
+        'cost_price': str(cost_price) if cost_price is not None else '',
+        'client_price': str(client_price) if client_price is not None else '',
         'category_action': category_action,
         'contractor_action': contractor_action,
         'service_action': service_action,
@@ -437,52 +446,91 @@ def process_import(file_obj, *, dry_run=True):
     contractor_cache = {}
     service_cache = {}
 
+    current_contractor_name = ''
+    current_contractor_comment = ''
+    current_phone = ''
+    current_email = ''
+    current_category_name = ''
+
     for index, row in enumerate(rows[1:], start=2):
         if not row or all(cell is None or str(cell).strip() == '' for cell in row):
             stats['rows_skipped'] += 1
             continue
 
         try:
-            category_name = normalize_entity_name(row[0])
-            service_name = normalize_string(row[1])
-            service_comment = normalize_string(row[2])
-            contractor_name = normalize_entity_name(row[3])
-            contractor_comment = normalize_string(row[4])
-            cost_price = parse_decimal(row[5])
-            client_price = parse_decimal(row[6])
-            phone = normalize_string(row[7])
-            email = normalize_string(row[8])
+            contractor_name_raw = normalize_entity_name(row[0])
+            contractor_comment_raw = normalize_string(row[1])
+            phone_raw = normalize_string(row[2])
+            email_raw = normalize_string(row[3])
+            category_name_raw = normalize_entity_name(row[4])
+            service_name = normalize_string(row[5])
+            service_comment = normalize_string(row[6])
+            cost_price_raw = row[7]
+            client_price_raw = row[8]
             image_url = normalize_string(row[9])
 
-            if not category_name:
-                raise ValueError('Не заполнено поле "Категория".')
-            if not service_name:
-                raise ValueError('Не заполнено поле "Услуга".')
-            if not contractor_name:
-                raise ValueError('Не заполнено поле "Подрядчик".')
+            if contractor_name_raw:
+                current_contractor_name = contractor_name_raw
+                current_contractor_comment = contractor_comment_raw
+                current_phone = phone_raw
+                current_email = email_raw
+                current_category_name = ''
 
-            category, category_action = get_or_create_category(
-                category_name,
-                stats,
-                dry_run=dry_run,
-                category_cache=category_cache,
-            )
+            elif contractor_comment_raw or phone_raw or email_raw:
+                if not current_contractor_name:
+                    raise ValueError(
+                        'Указаны данные подрядчика без имени подрядчика и без активного контекста подрядчика.'
+                    )
+
+                if contractor_comment_raw:
+                    current_contractor_comment = contractor_comment_raw
+                if phone_raw:
+                    current_phone = phone_raw
+                if email_raw:
+                    current_email = email_raw
+
+            if not current_contractor_name:
+                raise ValueError(
+                    'Не заполнено поле "Подрядчик" и отсутствует предыдущий подрядчик для наследования.'
+                )
+
+            if category_name_raw:
+                current_category_name = category_name_raw
+
+            if service_name and not current_category_name:
+                raise ValueError(
+                    'Не заполнено поле "Категория услуги" и отсутствует предыдущая категория для наследования.'
+                )
 
             contractor, contractor_action = get_or_create_or_update_contractor(
-                contractor_name,
-                contractor_comment,
-                phone,
-                email,
+                current_contractor_name,
+                current_contractor_comment,
+                current_phone,
+                current_email,
                 stats,
                 dry_run=dry_run,
                 contractor_cache=contractor_cache,
             )
 
+            if not service_name:
+                stats['rows_processed'] += 1
+                continue
+
+            cost_price = parse_decimal(cost_price_raw)
+            client_price = parse_decimal(client_price_raw)
+
+            category, category_action = get_or_create_category(
+                current_category_name,
+                stats,
+                dry_run=dry_run,
+                category_cache=category_cache,
+            )
+
             _, service_action = create_or_update_service(
                 contractor=contractor,
                 category=category,
-                contractor_name=contractor_name,
-                category_name=category_name,
+                contractor_name=current_contractor_name,
+                category_name=current_category_name,
                 name=service_name,
                 description=service_comment,
                 cost_price=cost_price,
@@ -496,9 +544,9 @@ def process_import(file_obj, *, dry_run=True):
             append_preview_row(
                 stats,
                 row_number=index,
-                category_name=category_name,
+                category_name=current_category_name,
                 service_name=service_name,
-                contractor_name=contractor_name,
+                contractor_name=current_contractor_name,
                 cost_price=cost_price,
                 client_price=client_price,
                 category_action=category_action,
