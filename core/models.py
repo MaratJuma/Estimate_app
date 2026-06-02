@@ -58,6 +58,8 @@ class Estimate(models.Model):
     comment = models.TextField(blank=True)
     is_approved = models.BooleanField(default=False)
     approved_at = models.DateTimeField(null=True, blank=True)
+    contract_number = models.CharField("Номер договора", max_length=100, db_index=True)
+    contract_estimate_number = models.PositiveIntegerField("Номер сметы по договору")
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
@@ -71,7 +73,16 @@ class Estimate(models.Model):
         return self.days.count()
 
     def __str__(self):
-        return f"Смета #{self.id} - {self.client_name}"
+        return f"Смета #{self.id} ({self.contract_number}/{self.contract_estimate_number}) - {self.client_name}"
+    
+    class Meta:
+        ordering = ['-created_at', '-id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=["contract_number", "contract_estimate_number"],
+                name="unique_estimate_per_contract_number",
+            ),
+        ]
 
 
 class EstimateDay(models.Model):
@@ -107,3 +118,41 @@ class EstimateItem(models.Model):
 
     def __str__(self):
         return f"{self.service.name} ({self.qty})"
+    
+
+class CompanyProfile(models.Model):
+    name = models.CharField("Название компании", max_length=255)
+    tagline = models.CharField("Слоган", max_length=255, blank=True)
+    phone = models.CharField("Телефон", max_length=50, blank=True)
+    email = models.EmailField("E-mail", blank=True)
+    site = models.CharField("Сайт", max_length=255, blank=True)
+    address = models.CharField("Адрес", max_length=255, blank=True)
+
+    logo = models.ImageField(
+        "Логотип",
+        upload_to="company_logos/",
+        blank=True,
+        null=True,
+    )
+
+    manager_title = models.CharField(
+        "Должность подписанта",
+        max_length=255,
+        default="Менеджер проекта",
+        blank=True,
+    )
+    manager_name = models.CharField(
+        "Имя подписанта по умолчанию",
+        max_length=255,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Профиль компании"
+        verbose_name_plural = "Профиль компании"
+
+    def __str__(self):
+        return self.name

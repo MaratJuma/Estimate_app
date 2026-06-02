@@ -1,4 +1,5 @@
 from .home import home
+from .admin_company import admin_company_update
 
 from .contractors import (
     contractor_list,

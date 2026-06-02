@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Регистрация компании</title>
+</head>
+<body>
+    <h1>Регистрация компании</h1>
+
+    <p>
+        После регистрации будет создан ваш отдельный tenant и субдомен.
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div style="color: red; margin-bottom: 12px;">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        {% for field in form %}
+            <div style="margin-bottom: 16px;">
+                <label for="{{ field.id_for_label }}" style="display:block; font-weight:600; margin-bottom:6px;">
+                    {{ field.label }}
+                </label>
+
+                {{ field }}
+
+                {% if field.help_text %}
+                    <div style="color:#666; margin-top:4px;">
+                        {{ field.help_text }}
+                    </div>
+                {% endif %}
+
+                {% if field.errors %}
+                    <div style="color:red; margin-top:4px;">
+                        {{ field.errors }}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <button type="submit">Создать компанию</button>
+    </form>
+
+    <p style="margin-top: 20px;">
+        <a href="{% url 'public_home' %}">На главную</a>
+    </p>
+</body>
+</html>

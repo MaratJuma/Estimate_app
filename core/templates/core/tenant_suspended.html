@@ -1,0 +1,23 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Доступ приостановлен{% endblock %}
+
+{% block content %}
+    <h2>Доступ к компании временно приостановлен</h2>
+
+    <div class="card">
+        <p>
+            Работа этого tenant-а временно отключена.
+        </p>
+
+        {% if tenant %}
+            <p>
+                <strong>Tenant:</strong> {{ tenant.name }}
+            </p>
+        {% endif %}
+
+        <p class="muted">
+            Обратитесь к администратору платформы для уточнения деталей.
+        </p>
+    </div>
+{% endblock %}

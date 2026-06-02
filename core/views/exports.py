@@ -7,6 +7,7 @@ from django.utils.text import slugify
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
+from ..utils import get_company_profile_data
 from ..models import Estimate
 from ..permissions import (
     can_view_estimates,
@@ -459,16 +460,7 @@ def estimate_print(request, estimate_id):
         total_client += day_total_client
         days.append(day)
 
-    company = {
-        'name': 'SAKHTRAVEL',
-        'tagline': 'Объединяя мечты',
-        'phone': '+7 (934) 477-30-08',
-        'email': 'go@sakhtravel.com',
-        'site': 'www.sakhtravel.com',
-        'address': 'г. Южно-Сахалинск, Есенина 1',
-        'manager_title': 'Менеджер проекта',
-        'manager_name': estimate.manager_name,
-    }
+    company = get_company_profile_data(default_manager_name=estimate.manager_name)
 
     return render(request, 'core/estimate_print.html', {
         'estimate': estimate,

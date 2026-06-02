@@ -4,14 +4,35 @@
 <head>
     <link rel="stylesheet" href="{% static 'core/css/app.css' %}">
     <meta charset="UTF-8">
-    <title>{% block title %}Система смет{% endblock %}</title>
-    
+    <title>
+        {% block title %}{{ company_name }}{% if platform_name %} — {{ platform_name }}{% endif %}{% endblock %}
+    </title>
 </head>
-    
+
 <body>
     <header>
-    <h1>Система смет</h1>
-      
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
+            {% if company_logo_url %}
+                <img
+                    src="{{ company_logo_url }}"
+                    alt="Логотип {{ company_name }}"
+                    style="max-width:72px; max-height:72px; object-fit:contain;"
+                >
+            {% endif %}
+
+            <div>
+                <h1 style="margin:0;">{{ company_name }}</h1>
+                {% comment %} 
+                {% if company_tagline %}
+                    <div style="color:#666; margin-top:4px;">{{ company_tagline }}</div>
+                {% endif %} {% endcomment %}
+
+                <div style="color:#888; margin-top:4px; font-size:22px;">
+                    {{ platform_name }}
+                </div>
+            </div>
+        </div>
+
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <nav>
                 <a href="{% url 'home' %}">Главная</a>
@@ -29,8 +50,7 @@
                 {% endif %}
 
                 {% if user.is_authenticated and is_admin_user %}
-                <a href="{% url 'admin_dashboard' %}">Администрирование</a>
-                {% comment %} <a href="/admin/">Админка Django</a> {% endcomment %}
+                    <a href="{% url 'admin_dashboard' %}">Администрирование</a>
                 {% endif %}
             </nav>
 
@@ -47,7 +67,6 @@
                 {% endif %}
             </div>
         </div>
-        
     </header>
 
     <div class="container">
@@ -67,14 +86,14 @@
                     </div>
                 {% endfor %}
             </div>
-{% endif %}
-        
+        {% endif %}
+
         {% block content %}
         {% endblock %}
     </div>
-    
+
     <footer style="text-align:center; padding:20px; color:#777;">
-        SISTEMASMET.ONLINE
+        {{ company_name }}{% if platform_name %} · {{ platform_name }}{% endif %}
     </footer>
 </body>
 </html>

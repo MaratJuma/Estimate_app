@@ -1,0 +1,217 @@
+Estimate_app/
+├── .gigacode
+│   └── plans
+├── config
+│   ├── project notes
+│   │   ├── day1_estimate.py
+│   │   ├── PROJECT_NOTES_2.md
+│   │   ├── Project_notes_3.md
+│   │   └── project_notes.md
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── public_urls.py
+│   ├── settings_legcy.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── core
+│   ├── management
+│   │   ├── commands
+│   │   │   └── init_tenant_company.py
+│   │   └── company
+│   ├── media
+│   │   └── company_logos
+│   ├── migrations
+│   │   ├── __init__.py
+│   │   ├── 0001_initial.py
+│   │   ├── 0002_service_is_active.py
+│   │   ├── 0003_estimateday.py
+│   │   ├── 0004_remove_estimateitem_estimate_and_more.py
+│   │   ├── 0005_contractor_email.py
+│   │   ├── 0006_alter_estimateitem_service.py
+│   │   ├── 0007_estimateday_description_estimateday_title.py
+│   │   ├── 0008_alter_estimateday_options_and_more.py
+│   │   ├── 0009_estimate_approved_at_estimate_is_approved.py
+│   │   ├── 0010_alter_estimateday_options_alter_estimateitem_options_and_more.py
+│   │   ├── 0011_auto_20260524_1113.py
+│   │   ├── 0012_auto_20260524_1121.py
+│   │   ├── 0013_auto_20260524_1130.py
+│   │   ├── 0014_auto_20260524_1131.py
+│   │   ├── 0015_remove_contractor_category.py
+│   │   ├── 0016_alter_service_category.py
+│   │   ├── 0017_servicecategory_service_category_ref.py
+│   │   ├── 0018_auto_20260526_1326.py
+│   │   ├── 0019_auto_20260526_1357.py
+│   │   ├── 0020_remove_service_category.py
+│   │   ├── 0021_rename_category_ref_service_category.py
+│   │   ├── 0022_estimate_created_by.py
+│   │   ├── 0023_alter_contractor_name.py
+│   │   └── 0024_companyprofile.py
+│   ├── selectors
+│   │   ├── __init__.py
+│   │   ├── admin_categories.py
+│   │   ├── admin_users.py
+│   │   ├── contractors.py
+│   │   ├── estimates.py
+│   │   └── services.py
+│   ├── services
+│   │   ├── __init__.py
+│   │   ├── admin_categories.py
+│   │   ├── admin_users.py
+│   │   ├── estimate_days.py
+│   │   ├── estimate_items.py
+│   │   ├── estimates.py
+│   │   ├── imports.py
+│   │   └── services.py
+│   ├── templates
+│   │   ├── core
+│   │   │   ├── includes
+│   │   │   │   ├── back_link.html
+│   │   │   │   ├── filter_summary_search_only.html
+│   │   │   │   ├── filter_summary.html
+│   │   │   │   ├── form_actions.html
+│   │   │   │   ├── object_meta_card.html
+│   │   │   │   ├── page_actions.html
+│   │   │   │   ├── pagination.html
+│   │   │   │   └── status_badge.html
+│   │   │   ├── admin_category_confirm_delete.html
+│   │   │   ├── admin_category_form.html
+│   │   │   ├── admin_category_list.html
+│   │   │   ├── admin_company_form.html
+│   │   │   ├── admin_dashboard.html
+│   │   │   ├── admin_import.html
+│   │   │   ├── admin_user_confirm_delete.html
+│   │   │   ├── admin_user_form.html
+│   │   │   ├── admin_user_list.html
+│   │   │   ├── base.html
+│   │   │   ├── contractor_detail.html
+│   │   │   ├── contractor_form.html
+│   │   │   ├── contractor_list.html
+│   │   │   ├── estimate_approve_confirm.html
+│   │   │   ├── estimate_confirm_delete.html
+│   │   │   ├── estimate_day_confirm_delete.html
+│   │   │   ├── estimate_day_form.html
+│   │   │   ├── estimate_detail.html
+│   │   │   ├── estimate_duplicate_confirm.html
+│   │   │   ├── estimate_form.html
+│   │   │   ├── estimate_item_add_selected_service.html
+│   │   │   ├── estimate_item_confirm_delete.html
+│   │   │   ├── estimate_item_edit_form.html
+│   │   │   ├── estimate_item_form.html
+│   │   │   ├── estimate_list.html
+│   │   │   ├── estimate_print.html
+│   │   │   ├── home.html
+│   │   │   ├── service_confirm_delete.html
+│   │   │   ├── service_detail.html
+│   │   │   ├── service_form.html
+│   │   │   ├── service_list.html
+│   │   │   └── tenant_suspended.html
+│   │   └── registration
+│   │       └── login.html
+│   ├── templatetags
+│   │   ├── __init__.py
+│   │   └── money_filters.py
+│   ├── tests
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   ├── test_admin_categories.py
+│   │   ├── test_admin_import_view.py
+│   │   ├── test_admin_users.py
+│   │   ├── test_context_processors.py
+│   │   ├── test_estimate_create.py
+│   │   ├── test_estimate_ownership.py
+│   │   ├── test_estimate_selector.py
+│   │   ├── test_estimate_services.py
+│   │   ├── test_import_services.py
+│   │   ├── test_permissions.py
+│   │   ├── test_selectors.py
+│   │   ├── test_service_services.py
+│   │   └── test_views_smoke.py
+│   ├── views
+│   │   ├── __init__.py
+│   │   ├── admin_categories.py
+│   │   ├── admin_company.py
+│   │   ├── admin_import.py
+│   │   ├── admin_users.py
+│   │   ├── contractors.py
+│   │   ├── estimate_days.py
+│   │   ├── estimate_items.py
+│   │   ├── estimates.py
+│   │   ├── exports.py
+│   │   ├── home.py
+│   │   └── services.py
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── context_processors.py
+│   ├── decorators.py
+│   ├── forms.py
+│   ├── models.py
+│   ├── permissions.py
+│   ├── structure.txt
+│   ├── urls.py
+│   ├── utils.py
+│   └── views_legacy.py
+├── customers
+│   ├── management
+│   │   ├── commands
+│   │   │   ├── __init__.py
+│   │   │   ├── activate_customer_tenant.py
+│   │   │   ├── create_customer_tenant_admin.py
+│   │   │   ├── create_customer_tenant.py
+│   │   │   ├── list_customer_tenants.py
+│   │   │   └── suspend_customer_tenant.py
+│   │   └── __init__.py
+│   ├── migrations
+│   │   ├── __init__.py
+│   │   └── 0001_initial.py
+│   ├── tests
+│   │   ├── __init__.py
+│   │   ├── test_management_commands.py
+│   │   └── test_middleware.py
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── middleware.py
+│   ├── models.py
+│   ├── test_management_commands.py
+│   └── views.py
+├── media
+│   └── company_logos
+│       ├── logo_o4JU4eg.png
+│       ├── logo_SZ3oSvm.png
+│       └── logo.png
+├── public_portal
+│   ├── migrations
+│   │   └── __init__.py
+│   ├── templates
+│   │   └── public_portal
+│   │       ├── home.html
+│   │       ├── register_success.html
+│   │       └── register.html
+│   ├── tests
+│   │   ├── __init__.py
+│   │   ├── test_forms.py
+│   │   └── test_services.py
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── forms.py
+│   ├── models.py
+│   ├── services.py
+│   ├── urls.py
+│   └── views.py
+├── static
+│   ├── core
+│   │   └── css
+│   │       └── app.css
+│   ├── fonts
+│   └── images
+│       └── logo.png
+├── venv..
+├── .env
+├── .gitattributes
+├── .gitignore
+├── manage.py
+├── requirements.txt
+└── todo.txt.txt

@@ -1,5 +1,7 @@
-from django.test import TestCase
-from django.contrib.auth.models import User, Group
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
+from django_tenants.utils import tenant_context
+
 from core.permissions import (
     is_admin,
     is_production_manager,
@@ -10,33 +12,39 @@ from core.permissions import (
     can_manage_services,
     can_manage_contractors,
 )
+from core.tests.base import TenantTestCase
+
+User = get_user_model()
 
 
-class PermissionsTestCase(TestCase):
+class PermissionsTestCase(TenantTestCase):
     def setUp(self):
-        self.admin = User.objects.create_user(
-            username='admin',
-            password='pass',
-            is_superuser=True,
-        )
-        self.production = User.objects.create_user(
-            username='production',
-            password='pass',
-        )
-        self.sales = User.objects.create_user(
-            username='sales',
-            password='pass',
-        )
-        self.regular = User.objects.create_user(
-            username='regular',
-            password='pass',
-        )
+        super().setUp()
 
-        production_group, _ = Group.objects.get_or_create(name='production_manager')
-        sales_group, _ = Group.objects.get_or_create(name='sales_manager')
+        with tenant_context(self.tenant):
+            self.admin = User.objects.create_user(
+                username='admin',
+                password='pass',
+                is_superuser=True,
+            )
+            self.production = User.objects.create_user(
+                username='production',
+                password='pass',
+            )
+            self.sales = User.objects.create_user(
+                username='sales',
+                password='pass',
+            )
+            self.regular = User.objects.create_user(
+                username='regular',
+                password='pass',
+            )
 
-        self.production.groups.add(production_group)
-        self.sales.groups.add(sales_group)
+            production_group, _ = Group.objects.get_or_create(name='production_manager')
+            sales_group, _ = Group.objects.get_or_create(name='sales_manager')
+
+            self.production.groups.add(production_group)
+            self.sales.groups.add(sales_group)
 
     def test_admin_has_full_access(self):
         self.assertTrue(is_admin(self.admin))

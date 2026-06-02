@@ -3,7 +3,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Смета #{{ estimate.id }}</title>
+    <title>Смета {{ estimate.contract_number }}/{{ estimate.contract_estimate_number }}</title>
     <style>
         @page {
             size: A4;
@@ -285,9 +285,21 @@
             <div class="top-header-left">
                 {% load static %}
                 <div class="logo-box">
-                    <img src="{% static 'images/logo.png' %}" alt="Логотип" 
-                        style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                    {% if company.logo %}
+                        <img src="{{ company.logo.url }}" alt="Логотип"
+                            style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                    {% else %}
+                        <img src="{% static 'images/logo.png' %}" alt="Логотип"
+                            style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                    {% endif %}
                 </div>
+
+                {% comment %} <div class="company-name">{{ company.name }}</div>
+
+                {% if company.tagline %}
+                    <div class="company-tagline">{{ company.tagline }}</div>
+                {% endif %} {% endcomment %}
+                
                 <div class="company-meta">
                     <div>{{ company.address }}</div>
                     <div>Тел.: {{ company.phone }}</div>
@@ -298,7 +310,9 @@
 
             <div class="top-header-right">
                 <div class="doc-title">СМЕТА</div>
-                <div class="doc-number"><strong>№:</strong> {{ estimate.id }}</div>
+                <div class="doc-number">
+                    <strong>№:</strong> {{ estimate.contract_number }}/{{ estimate.contract_estimate_number }}
+                </div>
                 <div class="doc-date"><strong>Дата:</strong> {{ document_date|date:"d.m.Y" }}</div>
             </div>
         </div>
@@ -306,6 +320,8 @@
         <div class="client-card">
             <div class="section-title">Информация по проекту</div>
             <div class="meta-row"><span class="meta-label">Клиент:</span> {{ estimate.client_name }}</div>
+            <div class="meta-row"><span class="meta-label">Номер договора:</span> {{ estimate.contract_number }}</div>
+            <div class="meta-row"><span class="meta-label">Номер сметы по договору:</span> {{ estimate.contract_estimate_number }}</div>
             <div class="meta-row"><span class="meta-label">Менеджер:</span> {{ estimate.manager_name }}</div>
             {% if estimate.comment %}
                 <div class="meta-row"><span class="meta-label">Комментарий:</span> {{ estimate.comment }}</div>

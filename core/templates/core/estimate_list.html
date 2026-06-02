@@ -20,7 +20,7 @@
                     type="text"
                     name="q"
                     value="{{ query }}"
-                    placeholder="Клиент, менеджер или комментарий"
+                    placeholder="Клиент, менеджер, комментарий, номер договора"
                 >
             </p>
 
@@ -43,18 +43,18 @@
     </div>
 
     {% if estimates %}
-        <!-- {% include 'core/includes/pagination.html' %} -->
-
         <div class="table-wrapper">
             <table class="estimate-table">
                 <thead>
                     <tr>
-                        <th style="width: 30px;">№</th>
+                        <th style="width: 60px;">ID</th>
+                        <th style="width: 150px;">Договор</th>
+                        <th style="width: 90px;">№ сметы</th>
                         <th style="width: 110px;">Статус</th>
                         <th style="width: 140px;">Клиент</th>
-                        <th style="width: 70px;">Менеджер</th>
+                        <th style="width: 120px;">Менеджер</th>
                         <th style="width: 220px;">Комментарий</th>
-                        <th style="width: 30px;">Дней</th>
+                        <th style="width: 60px;">Дней</th>
                         <th style="width: 95px;">Себестоимость</th>
                         <th style="width: 95px;">Клиенту</th>
                         <th style="width: 90px;">Маржа</th>
@@ -68,6 +68,8 @@
                             <td>
                                 <a href="{% url 'estimate_detail' estimate.id %}">{{ estimate.id }}</a>
                             </td>
+                            <td>{{ estimate.contract_number }}</td>
+                            <td>{{ estimate.contract_estimate_number }}</td>
                             <td>
                                 {% include 'core/includes/status_badge.html' with is_approved=estimate.is_approved %}
                                 {% if estimate.approved_at %}

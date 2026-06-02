@@ -1,3 +1,35 @@
+from .models import CompanyProfile
+
+
+def get_company_profile_data(default_manager_name=""):
+    profile = CompanyProfile.objects.order_by("id").first()
+
+    if profile:
+        return {
+            "name": profile.name,
+            "tagline": profile.tagline,
+            "phone": profile.phone,
+            "email": profile.email,
+            "site": profile.site,
+            "address": profile.address,
+            "logo": profile.logo,
+            "manager_title": profile.manager_title or "Менеджер проекта",
+            "manager_name": profile.manager_name or default_manager_name,
+        }
+
+    return {
+        "name": "Компания",
+        "tagline": "",
+        "phone": "",
+        "email": "",
+        "site": "",
+        "address": "",
+        "logo": None,
+        "manager_title": "Менеджер проекта",
+        "manager_name": default_manager_name,
+    }
+
+
 def build_pagination_slots(page_obj, window=7):
     current = page_obj.number
     total = page_obj.paginator.num_pages
@@ -25,3 +57,5 @@ def build_query_params_without_page(request):
 
 def get_next_url(request):
     return (request.GET.get('next') or request.POST.get('next') or '').strip()
+
+

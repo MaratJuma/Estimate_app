@@ -6,20 +6,29 @@
     <h2>Дублировать смету</h2>
 
     <div class="card">
-        <p><strong>Смета:</strong> #{{ estimate.id }}</p>
+        <p><strong>Смета:</strong> {{ estimate.contract_number }}/{{ estimate.contract_estimate_number }}</p>
+        <p><strong>ID:</strong> {{ estimate.id }}</p>
         <p><strong>Клиент:</strong> {{ estimate.client_name }}</p>
         <p><strong>Менеджер:</strong> {{ estimate.manager_name }}</p>
         <p><strong>Количество дней:</strong> {{ estimate.days.count }}</p>
     </div>
 
     <p>Будет создана полная копия сметы со всеми днями и позициями.</p>
+    <p>Можно оставить текущий номер договора или указать новый.</p>
 
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit">Да, дублировать смету</button>
-    </form>
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
 
-    <p class="top-space">
-        <a class="button-link" href="{% url 'estimate_detail' estimate.id %}">Отмена</a>
-    </p>
+            <p class="muted">
+                Если указанный номер договора уже существует, новой копии будет присвоен следующий порядковый номер сметы в рамках этого договора.
+            </p>
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button type="submit">Создать копию</button>
+                <a class="button-link" href="{% url 'estimate_detail' estimate.id %}">Отмена</a>
+            </div>
+        </form>
+    </div>
 {% endblock %}

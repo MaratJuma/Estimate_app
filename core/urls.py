@@ -47,6 +47,8 @@ from .views import (
     admin_user_delete,
     admin_import_database,
     
+    admin_company_update,
+    
     )
 
 urlpatterns = [
@@ -98,4 +100,5 @@ urlpatterns = [
     path('management/users/<int:user_id>/edit/', admin_user_update, name='admin_user_update'),
     path('management/users/<int:user_id>/delete/', admin_user_delete, name='admin_user_delete'), 
     path('management/import/', admin_import_database, name='admin_import_database'),
+    path('management/company/', admin_company_update, name='admin_company_update'),
 ]

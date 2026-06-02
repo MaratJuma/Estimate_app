@@ -1,12 +1,12 @@
 {% extends 'core/base.html' %}
 
-{% block title %}Смета #{{ estimate.id }}{% endblock %}
+{% block title %}Смета {{ estimate.contract_number }}/{{ estimate.contract_estimate_number }}{% endblock %}
 
 {% block content %}
 {% load money_filters %}
 
 <h2>
-    Смета #{{ estimate.id }}
+    Смета #{{ estimate.contract_number }}/{{ estimate.contract_estimate_number }}
     {% if estimate.is_approved %}
         <span style="color: green; font-size: 16px;">[Утверждена]</span>
     {% endif %}
@@ -17,6 +17,8 @@
 {% endif %}
 
 <div class="card">
+    <p><strong>Номер договора:</strong> {{ estimate.contract_number }}</p>
+    <p><strong>Номер сметы по договору:</strong> {{ estimate.contract_estimate_number }}</p>
     <p><strong>Клиент:</strong> {{ estimate.client_name }}</p>
     <p><strong>Менеджер:</strong> {{ estimate.manager_name }}</p>
     <p><strong>Комментарий:</strong> {{ estimate.comment|default:"—" }}</p>

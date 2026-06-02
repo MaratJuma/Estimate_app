@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Компания создана</title>
+</head>
+<body>
+    <h1>Компания успешно создана</h1>
+
+    <p><strong>Компания:</strong> {{ company_name }}</p>
+    <p><strong>Логин администратора:</strong> {{ admin_username }}</p>
+    <p><strong>Адрес tenant-а:</strong> {{ domain }}</p>
+
+    <p>
+        <a href="http://{{ domain }}:8000/accounts/login/">Перейти ко входу</a>
+    </p>
+
+    <p>
+        <a href="{% url 'public_home' %}">Вернуться на главную</a>
+    </p>
+</body>
+</html>

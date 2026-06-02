@@ -1,15 +1,68 @@
 from django import forms
-from .models import Estimate, EstimateItem, Contractor, Service, EstimateDay
+from .models import Estimate, EstimateItem, Contractor, Service, EstimateDay, CompanyProfile
 from django.contrib.auth import get_user_model
 
 class EstimateForm(forms.ModelForm):
     class Meta:
         model = Estimate
-        fields = ['client_name', 'comment']
+        fields = ['client_name', 'comment', 'contract_number']
         labels = {
+            'contract_number': 'Номер договора',
             'client_name': 'Клиент',
             'comment': 'Комментарий',
         }
+        error_messages = {
+            'contract_number': {
+                'required': 'Укажите номер договора.',
+            },
+        }
+        widgets = {
+            'contract_number': forms.TextInput(attrs={
+                'placeholder': 'Например: DOG-001',
+            }),
+            'comment': forms.Textarea(attrs={'rows': 4}),
+        }
+        
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields["contract_number"].disabled = True
+
+    def clean_contract_number(self):
+        value = self.cleaned_data["contract_number"].strip()
+        if not value:
+            raise forms.ValidationError("Укажите номер договора.")
+        return value
+
+
+class EstimateDuplicateForm(forms.Form):
+    contract_number = forms.CharField(
+        label="Номер договора",
+        max_length=100,
+        error_messages={
+            'required': 'Укажите номер договора.',
+        },
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Например: DOG-001',
+        }),
+    )
+
+    def clean_contract_number(self):
+        value = self.cleaned_data["contract_number"].strip()
+        if not value:
+            raise forms.ValidationError("Укажите номер договора.")
+        return value
+    
+
+class EstimateSearchForm(forms.Form):
+    q = forms.CharField(
+        label='Поиск',
+        required=False,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Клиент, менеджер, комментарий, номер договора',
+        }),
+    )
 
 
 class EstimateItemCreateForm(forms.ModelForm):
@@ -286,3 +339,44 @@ class DatabaseImportForm(forms.Form):
         if not file.name.lower().endswith('.xlsx'):
             raise forms.ValidationError('Поддерживаются только файлы формата .xlsx')
         return file
+    
+
+class CompanyProfileForm(forms.ModelForm):
+    class Meta:
+        model = CompanyProfile
+        fields = [
+            'name',
+            'tagline',
+            'phone',
+            'email',
+            'site',
+            'address',
+            'logo',
+            'manager_title',
+            'manager_name',
+        ]
+        labels = {
+            'name': 'Название компании',
+            'tagline': 'Слоган',
+            'phone': 'Телефон',
+            'email': 'E-mail',
+            'site': 'Сайт',
+            'address': 'Адрес',
+            'logo': 'Логотип',
+            'manager_title': 'Должность подписанта',
+            'manager_name': 'Имя подписанта по умолчанию',
+        }
+        widgets = {
+            'tagline': forms.TextInput(attrs={
+                'placeholder': 'Например: Объединяя мечты',
+            }),
+            'phone': forms.TextInput(attrs={
+                'placeholder': '+7 (...) ...',
+            }),
+            'site': forms.TextInput(attrs={
+                'placeholder': 'www.example.com',
+            }),
+            'address': forms.TextInput(attrs={
+                'placeholder': 'г. ..., ул. ..., д. ...',
+            }),
+        }

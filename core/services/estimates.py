@@ -1,4 +1,7 @@
 from django.utils import timezone
+from django.db import transaction
+from django.db.models import Max
+
 from core.models import Estimate, EstimateDay, EstimateItem
 
 
@@ -9,12 +12,29 @@ def get_display_manager_name(user):
     return user.username
 
 
-def create_estimate_with_first_day(*, client_name, comment, user):
+def get_next_contract_estimate_number(contract_number: str) -> int:
+    contract_number = contract_number.strip()
+
+    max_number = (
+        Estimate.objects
+        .filter(contract_number=contract_number)
+        .aggregate(max_number=Max("contract_estimate_number"))
+        ["max_number"]
+    )
+    return 1 if max_number is None else max_number + 1
+
+
+@transaction.atomic
+def create_estimate_with_first_day(*, client_name, comment, contract_number, user):
+    contract_number = contract_number.strip()
+
     estimate = Estimate.objects.create(
         client_name=client_name,
         manager_name=get_display_manager_name(user),
         created_by=user,
         comment=comment,
+        contract_number=contract_number,
+        contract_estimate_number=get_next_contract_estimate_number(contract_number),
     )
     EstimateDay.objects.create(estimate=estimate, day_number=1)
     return estimate
@@ -35,7 +55,9 @@ def approve_estimate(estimate):
     return estimate
 
 
-def duplicate_estimate(source_estimate, *, user):
+@transaction.atomic
+def duplicate_estimate(source_estimate, *, user, contract_number):
+    contract_number = contract_number.strip()
     duplicator_name = get_display_manager_name(user)
 
     copy_note = f'Копия сметы #{source_estimate.id}. Создана пользователем: {duplicator_name}'
@@ -50,13 +72,15 @@ def duplicate_estimate(source_estimate, *, user):
         manager_name=duplicator_name,
         created_by=user,
         comment=new_comment,
+        contract_number=contract_number,
+        contract_estimate_number=get_next_contract_estimate_number(contract_number),
         is_approved=False,
         approved_at=None,
     )
 
     day_mapping = {}
 
-    for day in source_estimate.days.all():
+    for day in source_estimate.days.all().order_by('day_number', 'id'):
         new_day = EstimateDay.objects.create(
             estimate=new_estimate,
             day_number=day.day_number,
@@ -65,7 +89,7 @@ def duplicate_estimate(source_estimate, *, user):
         )
         day_mapping[day.id] = new_day
 
-    for day in source_estimate.days.all():
+    for day in source_estimate.days.all().order_by('day_number', 'id'):
         new_day = day_mapping[day.id]
 
         for item in day.items.all():

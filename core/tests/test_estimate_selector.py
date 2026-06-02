@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django_tenants.utils import tenant_context
 
 from core.models import Contractor, ServiceCategory, Service, EstimateItem
 from core.selectors.estimates import (
@@ -9,30 +9,35 @@ from core.selectors.estimates import (
     calculate_margin_percent,
     attach_estimate_detail_day_summary,
     get_estimate_detail_queryset,
+    get_estimate_list_queryset,
 )
 from core.services.estimates import create_estimate_with_first_day
+from core.tests.base import TenantTestCase
 
 User = get_user_model()
 
 
-class EstimateSelectorsTests(TestCase):
+class EstimateSelectorsTests(TenantTestCase):
     def setUp(self):
-        self.user = User.objects.create_user(
-            username='manager',
-            password='pass12345',
-        )
-        self.category = ServiceCategory.objects.create(name='Транспорт', sort_order=1)
-        self.contractor = Contractor.objects.create(name='Поставщик')
-        self.service = Service.objects.create(
-            contractor=self.contractor,
-            category=self.category,
-            name='Трансфер',
-            description='',
-            cost_price=Decimal('100.00'),
-            client_price=Decimal('150.00'),
-            is_active=True,
-            image_url='',
-        )
+        super().setUp()
+
+        with tenant_context(self.tenant):
+            self.user = User.objects.create_user(
+                username='manager',
+                password='pass12345',
+            )
+            self.category = ServiceCategory.objects.create(name='Транспорт', sort_order=1)
+            self.contractor = Contractor.objects.create(name='Поставщик')
+            self.service = Service.objects.create(
+                contractor=self.contractor,
+                category=self.category,
+                name='Трансфер',
+                description='',
+                cost_price=Decimal('100.00'),
+                client_price=Decimal('150.00'),
+                is_active=True,
+                image_url='',
+            )
 
     def test_calculate_margin_percent(self):
         result = calculate_margin_percent(
@@ -49,56 +54,57 @@ class EstimateSelectorsTests(TestCase):
         self.assertEqual(result, Decimal('0.00'))
 
     def test_calculate_estimate_totals(self):
-        estimate = create_estimate_with_first_day(
-            client_name='Клиент',
-            comment='',
-            user=self.user,
-        )
-        day = estimate.days.first()
+        with tenant_context(self.tenant):
+            estimate = create_estimate_with_first_day(
+                client_name='Клиент',
+                comment='',
+                contract_number='DOG-001',
+                user=self.user,
+            )
+            day = estimate.days.first()
 
-        EstimateItem.objects.create(
-            estimate_day=day,
-            service=self.service,
-            qty=Decimal('2.00'),
-            cost_price=Decimal('100.00'),
-            client_price=Decimal('150.00'),
-            total_cost=Decimal('200.00'),
-            total_client=Decimal('300.00'),
-        )
+            EstimateItem.objects.create(
+                estimate_day=day,
+                service=self.service,
+                qty=Decimal('2.00'),
+                cost_price=Decimal('100.00'),
+                client_price=Decimal('150.00'),
+                total_cost=Decimal('200.00'),
+                total_client=Decimal('300.00'),
+            )
 
-        estimate = get_estimate_detail_queryset().get(id=estimate.id)
-        totals = calculate_estimate_totals(estimate)
+            estimate = get_estimate_detail_queryset().get(id=estimate.id)
+            totals = calculate_estimate_totals(estimate)
 
         self.assertEqual(totals['total_cost'], Decimal('200.00'))
         self.assertEqual(totals['total_client'], Decimal('300.00'))
         self.assertEqual(totals['margin'], Decimal('100.00'))
-        self.assertEqual(
-            totals['margin_percent'],
-            Decimal('33.33333333333333333333333333')
-        )
+        self.assertEqual(totals['margin_percent'], Decimal('33.33333333333333333333333333'))
 
     def test_attach_estimate_detail_day_summary(self):
-        estimate = create_estimate_with_first_day(
-            client_name='Клиент',
-            comment='',
-            user=self.user,
-        )
-        day = estimate.days.first()
+        with tenant_context(self.tenant):
+            estimate = create_estimate_with_first_day(
+                client_name='Клиент',
+                comment='',
+                contract_number='DOG-001',
+                user=self.user,
+            )
+            day = estimate.days.first()
 
-        EstimateItem.objects.create(
-            estimate_day=day,
-            service=self.service,
-            qty=Decimal('2.00'),
-            cost_price=Decimal('100.00'),
-            client_price=Decimal('150.00'),
-            total_cost=Decimal('200.00'),
-            total_client=Decimal('300.00'),
-        )
+            EstimateItem.objects.create(
+                estimate_day=day,
+                service=self.service,
+                qty=Decimal('2.00'),
+                cost_price=Decimal('100.00'),
+                client_price=Decimal('150.00'),
+                total_cost=Decimal('200.00'),
+                total_client=Decimal('300.00'),
+            )
 
-        estimate = get_estimate_detail_queryset().get(id=estimate.id)
-        days = list(estimate.days.all())
+            estimate = get_estimate_detail_queryset().get(id=estimate.id)
+            days = list(estimate.days.all())
 
-        result = attach_estimate_detail_day_summary(days)
+            result = attach_estimate_detail_day_summary(days)
 
         self.assertEqual(result['total_cost'], Decimal('200.00'))
         self.assertEqual(result['total_client'], Decimal('300.00'))
@@ -114,3 +120,17 @@ class EstimateSelectorsTests(TestCase):
         self.assertEqual(item.display_client_price, Decimal('150.00'))
         self.assertEqual(item.display_total_cost, Decimal('200.00'))
         self.assertEqual(item.display_total_client, Decimal('300.00'))
+
+    def test_get_estimate_list_queryset_searches_by_contract_number(self):
+        with tenant_context(self.tenant):
+            estimate = create_estimate_with_first_day(
+                client_name='Клиент',
+                comment='Комментарий',
+                contract_number='DOG-SEARCH-001',
+                user=self.user,
+            )
+
+            result = get_estimate_list_queryset(query='DOG-SEARCH-001')
+
+            self.assertEqual(result.count(), 1)
+            self.assertEqual(result.first().id, estimate.id)

@@ -7,7 +7,7 @@
 {% block content %}
     <h2>
         {% if is_edit %}
-            Редактирование сметы #{{ estimate.id }}
+            Редактирование сметы {{ estimate.contract_number }}/{{ estimate.contract_estimate_number }}
         {% else %}
             Создание сметы
         {% endif %}
@@ -16,12 +16,18 @@
     <div class="card card-spaced">
         {% if is_edit %}
             <p><strong>Менеджер:</strong> {{ estimate.manager_name }}</p>
+            <p><strong>Номер договора:</strong> {{ estimate.contract_number }}</p>
+            <p><strong>Номер сметы по договору:</strong> {{ estimate.contract_estimate_number }}</p>
         {% else %}
             <p><strong>Менеджер:</strong> {{ user.get_full_name|default:user.username }}</p>
         {% endif %}
     </div>
 
     <div class="card">
+        {% if is_edit %}
+            <p class="muted">Номер договора нельзя изменить после создания сметы. Изменение номера договора доступно только при дублировании сметы.</p>
+        {% endif %}
+
         <form method="post">
             {% csrf_token %}
             {{ form.as_p }}

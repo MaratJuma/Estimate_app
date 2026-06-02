@@ -3,7 +3,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
 
-from ..forms import EstimateForm
+from ..forms import EstimateForm, EstimateDuplicateForm, EstimateSearchForm
 from ..models import Estimate, EstimateItem
 from ..permissions import (
     can_approve_estimates,
@@ -33,7 +33,13 @@ def estimate_list(request):
     if not can_view_estimates(request.user):
         return deny_access(request, 'У вас нет прав на просмотр смет.')
 
-    query = request.GET.get('q', '').strip()
+    search_form = EstimateSearchForm(request.GET or None)
+    query = ''
+
+    if search_form.is_valid():
+        query = search_form.cleaned_data.get('q', '').strip()
+    else:
+        query = request.GET.get('q', '').strip()
 
     estimates = get_estimate_list_queryset(query=query)
 
@@ -51,6 +57,7 @@ def estimate_list(request):
         'page_obj': page_obj,
         'pagination_slots': pagination_slots,
         'query': query,
+        'search_form': search_form,
         'query_params': build_query_params_without_page(request),
     })
 
@@ -84,6 +91,7 @@ def estimate_detail(request, estimate_id):
         'can_duplicate_estimate_ui': can_duplicate_estimate_ui,
         'can_delete_estimate_ui': can_delete_estimate_ui,
         'can_show_delete_button': can_show_delete_button,
+        'can_approve_estimates_ui': can_approve_estimates(request.user),
     })
 
 @login_required
@@ -97,7 +105,12 @@ def estimate_create(request):
             estimate = create_estimate_with_first_day(
                 client_name=form.cleaned_data['client_name'],
                 comment=form.cleaned_data.get('comment', ''),
+                contract_number=form.cleaned_data['contract_number'],
                 user=request.user,
+            )
+            messages.success(
+                request,
+                f'Смета создана. Договор: {estimate.contract_number}, смета №{estimate.contract_estimate_number}.'
             )
             return redirect('estimate_detail', estimate_id=estimate.id)
     else:
@@ -127,7 +140,10 @@ def estimate_update(request, estimate_id):
     if request.method == 'POST':
         form = EstimateForm(request.POST, instance=estimate)
         if form.is_valid():
-            form.save()
+            updated_estimate = form.save(commit=False)
+            updated_estimate.contract_number = estimate.contract_number
+            updated_estimate.contract_estimate_number = estimate.contract_estimate_number
+            updated_estimate.save()
             messages.success(request, 'Смета обновлена.')
             return redirect('estimate_detail', estimate_id=estimate.id)
     else:
@@ -152,17 +168,29 @@ def estimate_duplicate(request, estimate_id):
         return deny_access(request, 'У вас нет прав на дублирование смет.')
 
     if request.method == 'POST':
-        new_estimate = duplicate_estimate(source_estimate, user=request.user)
+        form = EstimateDuplicateForm(request.POST)
+        if form.is_valid():
+            new_estimate = duplicate_estimate(
+                source_estimate,
+                user=request.user,
+                contract_number=form.cleaned_data['contract_number'],
+            )
 
-        messages.success(
-            request,
-            f'Смета #{source_estimate.id} успешно скопирована. '
-            f'Открыта форма редактирования новой сметы #{new_estimate.id}.'
+            messages.success(
+                request,
+                f'Смета #{source_estimate.id} успешно скопирована. '
+                f'Новый договор: {new_estimate.contract_number}, '
+                f'смета №{new_estimate.contract_estimate_number}.'
+            )
+            return redirect('estimate_update', estimate_id=new_estimate.id)
+    else:
+        form = EstimateDuplicateForm(
+            initial={'contract_number': source_estimate.contract_number}
         )
-        return redirect('estimate_update', estimate_id=new_estimate.id)
 
     return render(request, 'core/estimate_duplicate_confirm.html', {
         'estimate': source_estimate,
+        'form': form,
     })
 
 @login_required

@@ -33,7 +33,8 @@ def get_estimate_list_queryset(query=''):
         estimates = estimates.filter(
             Q(client_name__icontains=query) |
             Q(manager_name__icontains=query) |
-            Q(comment__icontains=query)
+            Q(comment__icontains=query) |
+            Q(contract_number__icontains=query)
         )
 
     return estimates
